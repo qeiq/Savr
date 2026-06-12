@@ -8,4 +8,5 @@ import kotlinx.coroutines.flow.Flow
 interface BookmarkRepository {
     suspend fun insert(bookmark: Bookmark)
     fun getBookmarks(): Flow<Resource<List<Bookmark>>>
+    suspend fun deleteBookmarks(bookmarks: List<Bookmark>)
 }

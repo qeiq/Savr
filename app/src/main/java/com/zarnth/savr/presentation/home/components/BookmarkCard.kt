@@ -1,7 +1,10 @@
 package com.zarnth.savr.presentation.home.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -47,6 +49,9 @@ fun BookmarkCard(
     modifier: Modifier = Modifier,
     photoClickUrl: (String) -> Unit,
     bodyClick: () -> Unit,
+    onLongClick: () -> Unit,
+    isSelected: Boolean = false,
+    isSelectionMode: Boolean = false,
     url: String
 ) {
 
@@ -60,14 +65,39 @@ fun BookmarkCard(
 
     var imageFailed by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
+    val cardModifier = if (isSelected) {
+        modifier
             .fillMaxWidth()
             .wrapContentHeight()
             .clip(MaterialTheme.shapes.extraLarge)
-            .clickable { bodyClick() }
+            .border(
+                width = 2.dp,
+                color = MaterialTheme.colorScheme.primary,
+                shape = MaterialTheme.shapes.extraLarge
+            )
+            .combinedClickable(
+                onClick = onLongClick,
+                onLongClick = onLongClick
+            )
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .padding(6.dp)
+    } else {
+        modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .clip(MaterialTheme.shapes.extraLarge)
+            .combinedClickable(
+                onClick = {
+                    if (isSelectionMode) onLongClick() else bodyClick()
+                },
+                onLongClick = onLongClick
+            )
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(6.dp)
+    }
+
+    Column(
+        modifier = cardModifier
     ) {
 
         Row(
@@ -140,7 +170,7 @@ fun BookmarkCard(
                     modifier = Modifier
                         .fillMaxSize()
                         .clickable {
-                            photoClickUrl(imageUrl)
+                            if (isSelectionMode) onLongClick() else photoClickUrl(imageUrl)
                         },
                     onError = {
                         imageFailed = true
@@ -168,6 +198,8 @@ fun BookmarkCard(
 
                 Text(
                     text = host,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )

@@ -11,5 +11,7 @@ data class HomeState(
     val isPhotoPreviewDialog: Boolean = false,
     val dialogPhotoUrl: String = "",
     val tempBookmark: Bookmark? = null,
-    val isBodySheet: Boolean = false
+    val isBodySheet: Boolean = false,
+    val selectedIds: Set<Long> = emptySet(),
+    val isSelectionMode: Boolean = false
 )

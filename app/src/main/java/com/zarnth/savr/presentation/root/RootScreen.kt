@@ -9,17 +9,17 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -36,61 +36,94 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun RootScreen(viewModel: HomeViewModel = koinViewModel()) {
 
-    //scaffold
     var itemIndex by remember { mutableIntStateOf(0) }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
+    val state by viewModel.state.collectAsState()
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection)
             .background(MaterialTheme.colorScheme.surface),
-        // bottom app bar
         bottomBar = {
-            BottomAppBar {
-                bottomAppBarItems.forEachIndexed { index, item ->
-                    val isClicked = itemIndex == index
-                    NavigationBarItem(
-                        label = {
-                            Text(item.title)
-                        },
-                        selected = isClicked,
-                        onClick = {
-                            itemIndex = index
-                        },
-                        icon = {
-                            Icon(
-                                painter = painterResource(if (isClicked) item.iconFilled else item.icon),
-                                contentDescription = item.title,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    )
+            if (!state.isSelectionMode) {
+                BottomAppBar {
+                    bottomAppBarItems.forEachIndexed { index, item ->
+                        val isClicked = itemIndex == index
+                        NavigationBarItem(
+                            label = {
+                                Text(item.title)
+                            },
+                            selected = isClicked,
+                            onClick = {
+                                itemIndex = index
+                            },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(if (isClicked) item.iconFilled else item.icon),
+                                    contentDescription = item.title,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        )
+                    }
                 }
             }
         },
-        // top app bar
         topBar = {
-            LargeTopAppBar(
-                scrollBehavior = scrollBehavior,
-                title = {
-                    Text("Savr Bookmarks")
-                }
-            )
+            if (state.isSelectionMode) {
+                LargeTopAppBar(
+                    scrollBehavior = scrollBehavior,
+                    title = {
+                        Text("Selected ${state.selectedIds.size}")
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            viewModel.homeEvents(HomeEvents.ClearSelection)
+                        }) {
+                            Icon(
+                                painter = painterResource(R.drawable.close_icon),
+                                contentDescription = "Clear selection"
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            viewModel.homeEvents(HomeEvents.DeleteSelected)
+                        }) {
+                            Icon(
+                                painter = painterResource(R.drawable.delete_icon),
+                                contentDescription = "Delete selected"
+                            )
+                        }
+                    }
+                )
+            } else {
+                LargeTopAppBar(
+                    scrollBehavior = scrollBehavior,
+                    title = {
+                        Text("Savr Bookmarks")
+                    }
+                )
+            }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    viewModel.homeEvents(HomeEvents.FabClick)
+            if (!state.isSelectionMode) {
+                Column {
+                    FloatingActionButton(
+                        onClick = {
+                            viewModel.homeEvents(HomeEvents.FabClick)
+                        }
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.add_icons),
+                            contentDescription = null,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
                 }
-            ) {
-                Icon(
-                    painterResource(R.drawable.add_icons),
-                    contentDescription = null,
-                    modifier = Modifier.size(26.dp)
-                )
             }
         }
     ) { innerPadding ->
@@ -99,7 +132,6 @@ fun RootScreen(viewModel: HomeViewModel = koinViewModel()) {
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            //HomeScreen
             HomeScreen()
         }
     }

@@ -57,6 +57,11 @@ fun HomeScreen(viewModel: HomeViewModel = koinViewModel()) {
                     bodyClick = {
                         viewModel.homeEvents(HomeEvents.BookmarkPreviewClick(item))
                     },
+                    onLongClick = {
+                        viewModel.homeEvents(HomeEvents.ToggleSelection(item.id))
+                    },
+                    isSelected = item.id in state.selectedIds,
+                    isSelectionMode = state.isSelectionMode,
                     url = item.url
                 )
             }

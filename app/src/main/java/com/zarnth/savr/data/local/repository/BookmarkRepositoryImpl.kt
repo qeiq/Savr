@@ -19,6 +19,10 @@ class BookmarkRepositoryImpl(
         dao.insert(bookmark.toEntity())
     }
 
+    override suspend fun deleteBookmarks(bookmarks: List<Bookmark>) {
+        dao.delete(bookmarks.map { it.toEntity() })
+    }
+
     override fun getBookmarks(): Flow<Resource<List<Bookmark>>> {
 
         return dao.getBookmarks()

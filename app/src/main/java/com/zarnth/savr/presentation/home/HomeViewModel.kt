@@ -19,7 +19,6 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
     val parser = LinkMetadataParser()
 
     init {
-        // fetching bookmarks from the db
         loadBookmarks()
     }
 
@@ -75,6 +74,54 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
                         isBodySheet = false,
                         tempBookmark = null
                     )
+                }
+            }
+
+            is HomeEvents.ToggleSelection -> {
+                val current = _state.value
+                val newSelected = if (events.id in current.selectedIds) {
+                    current.selectedIds - events.id
+                } else {
+                    current.selectedIds + events.id
+                }
+                _state.update {
+                    it.copy(
+                        selectedIds = newSelected,
+                        isSelectionMode = newSelected.isNotEmpty()
+                    )
+                }
+            }
+
+            HomeEvents.DeleteSelected -> {
+                deleteSelected()
+            }
+
+            HomeEvents.ClearSelection -> {
+                _state.update {
+                    it.copy(
+                        selectedIds = emptySet(),
+                        isSelectionMode = false
+                    )
+                }
+            }
+        }
+    }
+
+    private fun deleteSelected() {
+        val selected = _state.value.bookmarkData.filter { it.id in _state.value.selectedIds }
+        if (selected.isEmpty()) return
+        viewModelScope.launch {
+            try {
+                repository.deleteBookmarks(selected)
+                _state.update {
+                    it.copy(
+                        selectedIds = emptySet(),
+                        isSelectionMode = false
+                    )
+                }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(error = e.message ?: "Delete failed")
                 }
             }
         }

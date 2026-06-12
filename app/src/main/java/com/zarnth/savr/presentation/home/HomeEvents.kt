@@ -12,4 +12,8 @@ sealed class HomeEvents {
 
     data class BookmarkPreviewClick(val bookmark: Bookmark) : HomeEvents()
     object BookmarkPreviewDismissClick : HomeEvents()
+
+    data class ToggleSelection(val id: Long) : HomeEvents()
+    object DeleteSelected : HomeEvents()
+    object ClearSelection : HomeEvents()
 }

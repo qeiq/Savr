@@ -46,11 +46,11 @@ fun HomeInputSheet(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                Icon(
+             /*   Icon(
                     painter = painterResource(R.drawable.bookmark_one),
                     contentDescription = null,
                     modifier = Modifier.size(48.dp)
-                )
+                )*/
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -62,12 +62,12 @@ fun HomeInputSheet(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                Text(
+               /* Text(
                     text = "Paste the link you'd like to save",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
-                )
+                )*/
 
                 Spacer(modifier = Modifier.height(24.dp))
 
