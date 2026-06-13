@@ -20,6 +20,7 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
 
     init {
         loadBookmarks()
+        // searchBookmarks("d")
     }
 
     fun homeEvents(events: HomeEvents) {
@@ -102,6 +103,27 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
                         selectedIds = emptySet(),
                         isSelectionMode = false
                     )
+                }
+            }
+        }
+    }
+
+    fun searchBookmarks(searchQuery: String) {
+        viewModelScope.launch {
+            repository.searchBookmarks(searchQuery).collect { search ->
+                when (search) {
+                    is Resource.Error<*> -> {
+                        Log.d("Search VM", "Error ${search.errorMessage}")
+                    }
+
+                    is Resource.Loading<*> -> {
+                        Log.d("Search VM", "Loading...")
+                    }
+
+                    is Resource.Success<*> -> {
+                        Log.d("Search VM", "Result ${search.data}")
+
+                    }
                 }
             }
         }

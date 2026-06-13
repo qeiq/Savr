@@ -23,6 +23,25 @@ class BookmarkRepositoryImpl(
         dao.delete(bookmarks.map { it.toEntity() })
     }
 
+    override suspend fun searchBookmarks(text: String): Flow<Resource<List<Bookmark>>> {
+        return dao.searchBookmarks(text)
+            .map { list ->
+                Resource.Success(list.map { it.toDomain() }) as Resource<List<Bookmark>>
+            }
+
+            .onStart {
+                emit(Resource.Loading())
+            }
+
+            .catch { e ->
+                emit(
+                    Resource.Error(
+                        e.message ?: "Unknown error"
+                    )
+                )
+            }
+    }
+
     override fun getBookmarks(): Flow<Resource<List<Bookmark>>> {
 
         return dao.getBookmarks()

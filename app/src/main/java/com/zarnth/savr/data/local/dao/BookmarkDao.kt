@@ -18,4 +18,7 @@ interface BookmarkDao {
 
     @Query("SELECT * FROM bookmarks")
     fun getBookmarks(): Flow<List<BookmarkEntity>>
+
+    @Query("SELECT * FROM bookmarks WHERE title LIKE '%' || :searchQuery || '%'")
+    fun searchBookmarks(searchQuery: String): Flow<List<BookmarkEntity>>
 }
