@@ -14,8 +14,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zarnth.savr.openChromeTab
 import com.zarnth.savr.presentation.home.components.BookmarkCard
 import com.zarnth.savr.presentation.home.components.BookmarkPreviewSheet
 import com.zarnth.savr.presentation.home.components.HomeInputSheet
@@ -28,6 +32,8 @@ import org.koin.androidx.compose.koinViewModel
 fun HomeScreen(viewModel: HomeViewModel = koinViewModel()) {
 
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboard.current
 
     Box(
         modifier = Modifier
@@ -95,8 +101,14 @@ fun HomeScreen(viewModel: HomeViewModel = koinViewModel()) {
         onDismissRequest = {
             viewModel.homeEvents(HomeEvents.BookmarkPreviewDismissClick)
         },
-        imageURL = state.tempBookmark?.imageUrl ?: "",
-        title = state.tempBookmark?.title
+        openInBrowser = {
+            state.tempBookmark?.url?.let { openChromeTab(url = it, context = context) }
+        },
+        copyLinkButtonClick = {
+            state.tempBookmark?.url?.let {
+                clipboardManager.nativeClipboard.text = it
+            }
+        }
     )
 
 }

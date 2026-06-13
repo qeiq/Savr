@@ -1,10 +1,14 @@
 package com.zarnth.savr
 
+import android.app.Application
+import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -40,6 +44,7 @@ import com.zarnth.savr.ui.theme.SavrTheme
 import com.zarnth.savr.utils.Resource
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import androidx.core.net.toUri
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,150 +73,7 @@ class UserViewModel(
 }
 
 
-/*
-
-@Composable
-fun HomeScreen(
-    viewModel: UserViewModel = koinViewModel()
-) {
-
-    val parser = remember { LinkMetadataParser() }
-
-    var urlInput by remember { mutableStateOf("") }
-
-    val bookmarkState by viewModel.bookmarks.collectAsState(
-        initial = Resource.Loading()
-    )
-
-    val scope = rememberCoroutineScope()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-
-        // URL Input
-        TextField(
-            value = urlInput,
-            onValueChange = { urlInput = it },
-            label = {
-                Text("Enter URL")
-            },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Add Button
-        Button(
-            onClick = {
-
-                if (urlInput.isNotBlank()) {
-
-                    val url = urlInput
-
-                    urlInput = ""
-
-                    scope.launch {
-
-                        val data = parser.parse(url)
-
-                        Log.d("BRO", "Parsed: $data")
-
-                        data?.let {
-
-                            viewModel.insertBookmark(
-                                Bookmark(
-                                    url = it.url ?: url,
-                                    title = it.title,
-                                    description = it.description,
-                                    imageUrl = it.imageUrl
-                                )
-                            )
-                        }
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Add Bookmark")
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // UI State Handling
-        when (bookmarkState) {
-
-            is Resource.Loading -> {
-
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            is Resource.Error -> {
-
-                val message =
-                    (bookmarkState as Resource.Error).errorMessage
-
-                Text(
-                    text = message ?: "Unknown Error"
-                )
-            }
-
-            is Resource.Success -> {
-
-                val bookmarks =
-                    (bookmarkState as Resource.Success<List<Bookmark>>).data ?: emptyList()
-
-                LazyColumn {
-
-                    items(bookmarks) { bookmark ->
-
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                        ) {
-
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-
-                                Text(
-                                    text = bookmark.title ?: "No Title",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-
-                                Spacer(
-                                    modifier = Modifier.height(6.dp)
-                                )
-
-                                Text(
-                                    text = bookmark.url,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-
-                                Spacer(
-                                    modifier = Modifier.height(6.dp)
-                                )
-
-                                Text(
-                                    text = bookmark.description
-                                        ?: "No Description",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+fun openChromeTab(url: String, context: Context) {
+    val intent = CustomTabsIntent.Builder().build()
+    intent.launchUrl(context, url.toUri())
 }
-*/

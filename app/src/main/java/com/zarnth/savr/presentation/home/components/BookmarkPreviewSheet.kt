@@ -1,6 +1,7 @@
 package com.zarnth.savr.presentation.home.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +17,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -41,65 +44,61 @@ import com.zarnth.savr.R
 fun BookmarkPreviewSheet(
     showBottomSheet: Boolean,
     onDismissRequest: () -> Unit,
-    imageURL: String,
-    title: String?
+    openInBrowser: () -> Unit,
+    copyLinkButtonClick: () -> Unit
 ) {
-    if (showBottomSheet) {
-        ModalBottomSheet(
-            onDismissRequest = onDismissRequest,
-            dragHandle = null
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                ) {
-                    AsyncImage(
-                        model = imageURL,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(MaterialTheme.shapes.extraLarge),
-                        contentScale = ContentScale.Crop
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(MaterialTheme.shapes.extraLarge)
-                            .background(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)
-                            )
-                    )
-                    Text(
-                        text = title.orEmpty(),
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(14.dp),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Button(onClick = {}) { Text("Open") }
-                    Button(onClick = {}) { Text("Share") }
-                    Button(onClick = {}) { Text("Delete") }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
+    if (!showBottomSheet) return
+
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        ListItem(
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.extraLarge)
+                .clickable {
+                    openInBrowser()
+                    onDismissRequest()
+                },
+            colors = ListItemDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            headlineContent = {
+                Text("Open In Browser")
+            },
+            leadingContent = {
+                Icon(
+                    painter = painterResource(R.drawable.open_in_browser),
+                    contentDescription = "Copy Link"
+                )
             }
-        }
+        )
+        ListItem(
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.extraLarge)
+                .clickable {
+                    copyLinkButtonClick()
+                    onDismissRequest()
+                },
+            colors = ListItemDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            headlineContent = {
+                Text("Copy Link")
+            },
+            leadingContent = {
+                Icon(
+                    painter = painterResource(R.drawable.copy_icon),
+                    contentDescription = "Copy Link"
+                )
+            }
+        )
+
+
+        Spacer(Modifier.height(24.dp))
     }
 }
