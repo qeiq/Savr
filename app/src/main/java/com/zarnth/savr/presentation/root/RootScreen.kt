@@ -30,6 +30,8 @@ import com.zarnth.savr.R
 import com.zarnth.savr.presentation.home.HomeEvents
 import com.zarnth.savr.presentation.home.HomeScreen
 import com.zarnth.savr.presentation.home.HomeViewModel
+import com.zarnth.savr.presentation.search.SearchScreen
+import com.zarnth.savr.presentation.setting.SettingScreen
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -111,19 +113,19 @@ fun RootScreen(viewModel: HomeViewModel = koinViewModel()) {
         },
         floatingActionButton = {
             if (!state.isSelectionMode) {
-                Column {
-                    FloatingActionButton(
-                        onClick = {
-                            viewModel.homeEvents(HomeEvents.FabClick)
-                        }
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.add_icons),
-                            contentDescription = null,
-                            modifier = Modifier.size(26.dp)
-                        )
+
+                FloatingActionButton(
+                    onClick = {
+                        viewModel.homeEvents(HomeEvents.FabClick)
                     }
+                ) {
+                    Icon(
+                        painterResource(R.drawable.add_icons),
+                        contentDescription = null,
+                        modifier = Modifier.size(26.dp)
+                    )
                 }
+
             }
         }
     ) { innerPadding ->
@@ -132,7 +134,11 @@ fun RootScreen(viewModel: HomeViewModel = koinViewModel()) {
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            HomeScreen()
+            when (itemIndex) {
+                0 -> HomeScreen()
+                1 -> SearchScreen()
+                2 -> SettingScreen()
+            }
         }
     }
 
