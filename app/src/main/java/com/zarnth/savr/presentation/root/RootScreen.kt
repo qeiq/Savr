@@ -1,7 +1,6 @@
 package com.zarnth.savr.presentation.root
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,6 +26,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.zarnth.savr.R
+import com.zarnth.savr.navigation.AppNavHost
 import com.zarnth.savr.presentation.home.HomeEvents
 import com.zarnth.savr.presentation.home.HomeScreen
 import com.zarnth.savr.presentation.home.HomeViewModel
@@ -37,12 +37,10 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RootScreen(viewModel: HomeViewModel = koinViewModel()) {
-
-    var itemIndex by remember { mutableIntStateOf(0) }
+    val state by viewModel.state.collectAsState()
+    var currentTab by remember { mutableIntStateOf(0) }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-
-    val state by viewModel.state.collectAsState()
 
     Scaffold(
         modifier = Modifier
@@ -53,15 +51,11 @@ fun RootScreen(viewModel: HomeViewModel = koinViewModel()) {
             if (!state.isSelectionMode) {
                 BottomAppBar {
                     bottomAppBarItems.forEachIndexed { index, item ->
-                        val isClicked = itemIndex == index
+                        val isClicked = currentTab == index
                         NavigationBarItem(
-                            label = {
-                                Text(item.title)
-                            },
+                            label = { Text(item.title) },
                             selected = isClicked,
-                            onClick = {
-                                itemIndex = index
-                            },
+                            onClick = { currentTab = index },
                             icon = {
                                 Icon(
                                     painter = painterResource(if (isClicked) item.iconFilled else item.icon),
@@ -78,13 +72,9 @@ fun RootScreen(viewModel: HomeViewModel = koinViewModel()) {
             if (state.isSelectionMode) {
                 LargeTopAppBar(
                     scrollBehavior = scrollBehavior,
-                    title = {
-                        Text("Selected ${state.selectedIds.size}")
-                    },
+                    title = { Text("Selected ${state.selectedIds.size}") },
                     navigationIcon = {
-                        IconButton(onClick = {
-                            viewModel.homeEvents(HomeEvents.ClearSelection)
-                        }) {
+                        IconButton(onClick = { viewModel.homeEvents(HomeEvents.ClearSelection) }) {
                             Icon(
                                 painter = painterResource(R.drawable.close_icon),
                                 contentDescription = "Clear selection"
@@ -92,9 +82,7 @@ fun RootScreen(viewModel: HomeViewModel = koinViewModel()) {
                         }
                     },
                     actions = {
-                        IconButton(onClick = {
-                            viewModel.homeEvents(HomeEvents.DeleteSelected)
-                        }) {
+                        IconButton(onClick = { viewModel.homeEvents(HomeEvents.DeleteSelected) }) {
                             Icon(
                                 painter = painterResource(R.drawable.delete_icon),
                                 contentDescription = "Delete selected"
@@ -105,19 +93,14 @@ fun RootScreen(viewModel: HomeViewModel = koinViewModel()) {
             } else {
                 LargeTopAppBar(
                     scrollBehavior = scrollBehavior,
-                    title = {
-                        Text("Savr Bookmarks")
-                    }
+                    title = { Text("Savr Bookmarks") }
                 )
             }
         },
         floatingActionButton = {
             if (!state.isSelectionMode) {
-
                 FloatingActionButton(
-                    onClick = {
-                        viewModel.homeEvents(HomeEvents.FabClick)
-                    }
+                    onClick = { viewModel.homeEvents(HomeEvents.FabClick) }
                 ) {
                     Icon(
                         painterResource(R.drawable.add_icons),
@@ -125,22 +108,18 @@ fun RootScreen(viewModel: HomeViewModel = koinViewModel()) {
                         modifier = Modifier.size(26.dp)
                     )
                 }
-
             }
         }
     ) { innerPadding ->
-        Column(
+        AppNavHost(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize()
-        ) {
-            when (itemIndex) {
-                0 -> HomeScreen()
-                1 -> SearchScreen()
-                2 -> SettingScreen()
-            }
-        }
+                .fillMaxSize(),
+            currentTab = currentTab,
+            onTabChange = { currentTab = it },
+            homeScreen = { HomeScreen() },
+            searchScreen = { SearchScreen() },
+            settingsScreen = { SettingScreen() }
+        )
     }
-
 }
-
