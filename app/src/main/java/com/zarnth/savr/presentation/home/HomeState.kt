@@ -13,5 +13,7 @@ data class HomeState(
     val tempBookmark: Bookmark? = null,
     val isBodySheet: Boolean = false,
     val selectedIds: Set<Long> = emptySet(),
-    val isSelectionMode: Boolean = false
+    val isSelectionMode: Boolean = false,
+    val showCollectionPicker: Boolean = false,
+    val collections: List<com.zarnth.savr.domain.model.Collection> = emptyList()
 )

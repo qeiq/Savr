@@ -15,9 +15,9 @@ val bottomAppBarItems = listOf<BottomAppBarItem>(
         iconFilled = R.drawable.home_icon_filled
     ),
     BottomAppBarItem(
-        title = "Search",
-        icon = R.drawable.search_icon,
-        iconFilled = R.drawable.search_icon
+        title = "Collections",
+        icon = R.drawable.bookmark_one,
+        iconFilled = R.drawable.bookmark_fill
     ),
     BottomAppBarItem(
         title = "Settings",

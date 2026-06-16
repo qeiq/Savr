@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
@@ -44,6 +45,10 @@ fun HomeScreen(
     }
     val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
+
+    BackHandler(enabled = state.isSelectionMode) {
+        viewModel.homeEvents(HomeEvents.ClearSelection)
+    }
 
     Box(
         modifier = Modifier

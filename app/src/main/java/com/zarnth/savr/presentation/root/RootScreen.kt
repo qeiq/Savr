@@ -27,10 +27,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.zarnth.savr.R
 import com.zarnth.savr.navigation.AppNavHost
+import com.zarnth.savr.presentation.collection.CollectionDetailScreen
+import com.zarnth.savr.presentation.collection.CollectionEvents
+import com.zarnth.savr.presentation.collection.CollectionScreen
+import com.zarnth.savr.presentation.collection.CollectionViewModel
+import com.zarnth.savr.presentation.collection.components.CollectionPickerSheet
 import com.zarnth.savr.presentation.home.HomeEvents
 import com.zarnth.savr.presentation.home.HomeScreen
 import com.zarnth.savr.presentation.home.HomeViewModel
-import com.zarnth.savr.presentation.search.SearchScreen
 import com.zarnth.savr.presentation.setting.SettingScreen
 import org.koin.androidx.compose.koinViewModel
 
@@ -38,9 +42,11 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun RootScreen(
     sharedUrl: String? = null,
-    viewModel: HomeViewModel = koinViewModel()
+    viewModel: HomeViewModel = koinViewModel(),
+    collectionViewModel: CollectionViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val collectionState by collectionViewModel.state.collectAsState()
     var currentTab by remember { mutableIntStateOf(0) }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -51,7 +57,7 @@ fun RootScreen(
             .nestedScroll(scrollBehavior.nestedScrollConnection)
             .background(MaterialTheme.colorScheme.surface),
         bottomBar = {
-            if (!state.isSelectionMode) {
+            if (!state.isSelectionMode && !collectionState.isSelectionMode && !collectionState.isDetailSelectionMode) {
                 BottomAppBar {
                     bottomAppBarItems.forEachIndexed { index, item ->
                         val isClicked = currentTab == index
@@ -85,6 +91,13 @@ fun RootScreen(
                         }
                     },
                     actions = {
+                        IconButton(onClick = { viewModel.homeEvents(HomeEvents.ShowCollectionPicker) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.bookmark_one),
+                                contentDescription = "Add to collection",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                         IconButton(onClick = { viewModel.homeEvents(HomeEvents.DeleteSelected) }) {
                             Icon(
                                 painter = painterResource(R.drawable.delete_icon),
@@ -93,23 +106,84 @@ fun RootScreen(
                         }
                     }
                 )
+            } else if (collectionState.isSelectionMode) {
+                LargeTopAppBar(
+                    scrollBehavior = scrollBehavior,
+                    title = { Text("Selected ${collectionState.selectedIds.size}") },
+                    navigationIcon = {
+                        IconButton(onClick = { collectionViewModel.onEvent(CollectionEvents.ClearSelection) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.close_icon),
+                                contentDescription = "Clear selection"
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { collectionViewModel.onEvent(CollectionEvents.DeleteSelected) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.delete_icon),
+                                contentDescription = "Delete selected"
+                            )
+                        }
+                    }
+                )
+            } else if (collectionState.isDetailSelectionMode) {
+                LargeTopAppBar(
+                    scrollBehavior = scrollBehavior,
+                    title = { Text("Selected ${collectionState.detailSelectedIds.size}") },
+                    navigationIcon = {
+                        IconButton(onClick = { collectionViewModel.onEvent(CollectionEvents.ClearDetailSelection) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.close_icon),
+                                contentDescription = "Clear selection"
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = {
+                                collectionState.selectedCollection?.id?.let {
+                                    collectionViewModel.onEvent(CollectionEvents.RemoveSelectedFromCollection(it))
+                                }
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.delete_icon),
+                                contentDescription = "Remove from collection"
+                            )
+                        }
+                    }
+                )
             } else {
                 LargeTopAppBar(
                     scrollBehavior = scrollBehavior,
-                    title = { Text("Savr Bookmarks") }
+                    title = { Text(if (currentTab == 0) "Savr Bookmarks" else bottomAppBarItems[currentTab].title) }
                 )
             }
         },
         floatingActionButton = {
-            if (!state.isSelectionMode) {
-                FloatingActionButton(
-                    onClick = { viewModel.homeEvents(HomeEvents.FabClick) }
-                ) {
-                    Icon(
-                        painterResource(R.drawable.add_icons),
-                        contentDescription = null,
-                        modifier = Modifier.size(26.dp)
-                    )
+            if (!state.isSelectionMode && !collectionState.isSelectionMode && !collectionState.isDetailSelectionMode) {
+                when (currentTab) {
+                    0 -> FloatingActionButton(
+                        onClick = { viewModel.homeEvents(HomeEvents.FabClick) }
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.add_icons),
+                            contentDescription = null,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                    1 -> if (collectionState.selectedCollection == null) {
+                        FloatingActionButton(
+                            onClick = { collectionViewModel.onEvent(CollectionEvents.ShowCreateDialog) }
+                        ) {
+                            Icon(
+                                painterResource(R.drawable.add_icons),
+                                contentDescription = null,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -121,8 +195,19 @@ fun RootScreen(
             currentTab = currentTab,
             onTabChange = { currentTab = it },
             homeScreen = { HomeScreen(sharedUrl = sharedUrl) },
-            searchScreen = { SearchScreen() },
+            collectionsScreen = { navigateToDetail -> CollectionScreen(onCollectionClick = navigateToDetail) },
+            collectionDetailScreen = { collectionId ->
+                CollectionDetailScreen(collectionId = collectionId, viewModel = collectionViewModel)
+            },
             settingsScreen = { SettingScreen() }
+        )
+    }
+
+    if (state.showCollectionPicker) {
+        CollectionPickerSheet(
+            collections = state.collections,
+            onSelectCollection = { viewModel.homeEvents(HomeEvents.AddToCollection(it)) },
+            onDismiss = { viewModel.homeEvents(HomeEvents.HideCollectionPicker) }
         )
     }
 }

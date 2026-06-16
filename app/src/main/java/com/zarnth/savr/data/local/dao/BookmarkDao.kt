@@ -16,9 +16,12 @@ interface BookmarkDao {
     @Delete
     suspend fun delete(entities: List<BookmarkEntity>)
 
-    @Query("SELECT * FROM bookmarks")
+    @Query("SELECT * FROM bookmarks WHERE isHidden = 0")
     fun getBookmarks(): Flow<List<BookmarkEntity>>
 
     @Query("SELECT * FROM bookmarks WHERE title LIKE '%' || :searchQuery || '%'")
     fun searchBookmarks(searchQuery: String): Flow<List<BookmarkEntity>>
+
+    @Query("UPDATE bookmarks SET isHidden = 1 WHERE id IN (:ids)")
+    suspend fun hideBookmarks(ids: List<Long>)
 }

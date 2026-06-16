@@ -16,4 +16,7 @@ sealed class HomeEvents {
     data class ToggleSelection(val id: Long) : HomeEvents()
     object DeleteSelected : HomeEvents()
     object ClearSelection : HomeEvents()
+    object ShowCollectionPicker : HomeEvents()
+    object HideCollectionPicker : HomeEvents()
+    data class AddToCollection(val collectionId: Long) : HomeEvents()
 }

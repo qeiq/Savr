@@ -13,15 +13,16 @@ fun AppNavHost(
     currentTab: Int,
     onTabChange: (Int) -> Unit,
     homeScreen: @Composable () -> Unit,
-    searchScreen: @Composable () -> Unit,
+    collectionsScreen: @Composable (onNavigateToDetail: (Long) -> Unit) -> Unit,
+    collectionDetailScreen: @Composable (collectionId: Long) -> Unit,
     settingsScreen: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val backStacks = remember {
+    val backStacks: List<MutableList<AppRoute>> = remember {
         listOf(
-            mutableStateListOf(AppRoute.Home),
-            mutableStateListOf(AppRoute.Search),
-            mutableStateListOf(AppRoute.Settings)
+            mutableStateListOf<AppRoute>(AppRoute.Home),
+            mutableStateListOf<AppRoute>(AppRoute.Collections),
+            mutableStateListOf<AppRoute>(AppRoute.Settings)
         )
     }
 
@@ -40,9 +41,12 @@ fun AppNavHost(
         onBack = { currentBackStack.removeLastOrNull() },
         entryProvider = { route ->
             when (route) {
-                AppRoute.Home -> NavEntry(route) { homeScreen() }
-                AppRoute.Search -> NavEntry(route) { searchScreen() }
-                AppRoute.Settings -> NavEntry(route) { settingsScreen() }
+                is AppRoute.Home -> NavEntry(route) { homeScreen() }
+                is AppRoute.Collections -> NavEntry(route) {
+                    collectionsScreen { id -> currentBackStack.add(AppRoute.CollectionDetail(id)) }
+                }
+                is AppRoute.CollectionDetail -> NavEntry(route) { collectionDetailScreen(route.collectionId) }
+                is AppRoute.Settings -> NavEntry(route) { settingsScreen() }
             }
         }
     )

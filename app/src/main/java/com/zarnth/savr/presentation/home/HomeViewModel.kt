@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zarnth.savr.domain.model.Bookmark
+import com.zarnth.savr.domain.model.Collection
 import com.zarnth.savr.domain.repository.BookmarkRepository
 import com.zarnth.savr.link_fetcher.LinkMetadataParser
 import com.zarnth.savr.utils.Resource
@@ -20,7 +21,7 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
 
     init {
         loadBookmarks()
-        // searchBookmarks("d")
+        loadCollections()
     }
 
     fun homeEvents(events: HomeEvents) {
@@ -105,6 +106,18 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
                     )
                 }
             }
+
+            HomeEvents.ShowCollectionPicker -> {
+                _state.update { it.copy(showCollectionPicker = true) }
+            }
+
+            HomeEvents.HideCollectionPicker -> {
+                _state.update { it.copy(showCollectionPicker = false) }
+            }
+
+            is HomeEvents.AddToCollection -> {
+                addSelectedToCollection(events.collectionId)
+            }
         }
     }
 
@@ -130,11 +143,11 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
     }
 
     private fun deleteSelected() {
-        val selected = _state.value.bookmarkData.filter { it.id in _state.value.selectedIds }
-        if (selected.isEmpty()) return
+        val ids = _state.value.selectedIds.toList()
+        if (ids.isEmpty()) return
         viewModelScope.launch {
             try {
-                repository.deleteBookmarks(selected)
+                repository.hideBookmarks(ids)
                 _state.update {
                     it.copy(
                         selectedIds = emptySet(),
@@ -181,6 +194,32 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
         }
     }
 
+
+    private fun loadCollections() {
+        viewModelScope.launch {
+            repository.getAllCollections().collect { resource ->
+                if (resource is Resource.Success) {
+                    _state.update { it.copy(collections = resource.data ?: emptyList()) }
+                }
+            }
+        }
+    }
+
+    private fun addSelectedToCollection(collectionId: Long) {
+        val ids = _state.value.selectedIds
+        viewModelScope.launch {
+            ids.forEach { id ->
+                repository.addBookmarkToCollection(id, collectionId)
+            }
+            _state.update {
+                it.copy(
+                    showCollectionPicker = false,
+                    selectedIds = emptySet(),
+                    isSelectionMode = false
+                )
+            }
+        }
+    }
 
     private fun loadBookmarks() {
         viewModelScope.launch {
