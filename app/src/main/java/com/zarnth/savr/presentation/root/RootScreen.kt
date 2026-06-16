@@ -36,7 +36,10 @@ import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RootScreen(viewModel: HomeViewModel = koinViewModel()) {
+fun RootScreen(
+    sharedUrl: String? = null,
+    viewModel: HomeViewModel = koinViewModel()
+) {
     val state by viewModel.state.collectAsState()
     var currentTab by remember { mutableIntStateOf(0) }
 
@@ -117,7 +120,7 @@ fun RootScreen(viewModel: HomeViewModel = koinViewModel()) {
                 .fillMaxSize(),
             currentTab = currentTab,
             onTabChange = { currentTab = it },
-            homeScreen = { HomeScreen() },
+            homeScreen = { HomeScreen(sharedUrl = sharedUrl) },
             searchScreen = { SearchScreen() },
             settingsScreen = { SettingScreen() }
         )

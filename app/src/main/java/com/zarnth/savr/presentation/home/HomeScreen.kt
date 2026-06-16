@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
@@ -29,9 +30,18 @@ import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = koinViewModel()) {
-
+fun HomeScreen(
+    sharedUrl: String? = null,
+    viewModel: HomeViewModel = koinViewModel()
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(sharedUrl) {
+        if (sharedUrl != null) {
+            viewModel.homeEvents(HomeEvents.OnTextFieldValueChange(sharedUrl))
+            viewModel.homeEvents(HomeEvents.FabClick)
+        }
+    }
     val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
 

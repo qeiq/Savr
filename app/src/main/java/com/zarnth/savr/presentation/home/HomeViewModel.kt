@@ -151,9 +151,14 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
 
     fun saveBookmark() {
 
-        val url = _state.value.inputUrl.trim()
+        val rawUrl = _state.value.inputUrl.trim()
 
-        if (url.isEmpty()) return
+        if (rawUrl.isEmpty()) return
+        val url = if (!rawUrl.startsWith("http://") && !rawUrl.startsWith("https://")) {
+            "https://$rawUrl"
+        } else {
+            rawUrl
+        }
         viewModelScope.launch {
             try {
                 _state.update { it.copy(isLoading = true) }

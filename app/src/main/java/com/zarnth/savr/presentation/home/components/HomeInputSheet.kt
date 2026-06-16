@@ -45,13 +45,6 @@ fun HomeInputSheet(
                     .padding(bottom = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
-             /*   Icon(
-                    painter = painterResource(R.drawable.bookmark_one),
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp)
-                )*/
-
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
@@ -60,22 +53,19 @@ fun HomeInputSheet(
                     fontWeight = FontWeight.SemiBold
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
-
-               /* Text(
-                    text = "Paste the link you'd like to save",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )*/
-
                 Spacer(modifier = Modifier.height(24.dp))
+
+                val hasScheme = value.startsWith("http://") || value.startsWith("https://")
+                val looksLikeDomain = value.contains(".") && !value.contains(" ") && value.isNotBlank()
+                val isValidUrl = hasScheme || looksLikeDomain
+                val showError = value.isNotBlank() && !isValidUrl
 
                 OutlinedTextField(
                     value = value,
                     onValueChange = onTextChange,
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    isError = showError,
                     leadingIcon = {
                         Icon(
                            painter = painterResource(R.drawable.link_three),
@@ -88,7 +78,17 @@ fun HomeInputSheet(
                     },
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Done
-                    )
+                    ),
+                    supportingText = if (showError) {
+                        {
+                            Text(
+                                "Enter a valid URL",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    } else {
+                        null
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -98,7 +98,7 @@ fun HomeInputSheet(
                         onSaveClick()
                         onDismissRequest()
                     },
-                    enabled = value.isNotBlank(),
+                    enabled = isValidUrl,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Save Bookmark")
