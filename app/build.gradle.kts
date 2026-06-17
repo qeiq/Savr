@@ -25,7 +25,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -66,8 +67,8 @@ dependencies {
     implementation("org.jsoup:jsoup:1.22.1")
     implementation("com.squareup.okhttp3:okhttp:5.3.2")
 
-    implementation("io.coil-kt.coil3:coil-compose:3.3.0")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
+    implementation("io.coil-kt.coil3:coil-compose:3.4.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.4.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
 
     implementation("androidx.room:room-runtime:2.8.4")
@@ -76,15 +77,8 @@ dependencies {
 
     // Koin BOM
     implementation(platform("io.insert-koin:koin-bom:4.2.1"))
-
-    // Core Android
     implementation("io.insert-koin:koin-android")
-
-    // Jetpack Compose
     implementation("io.insert-koin:koin-androidx-compose")
-
-    implementation("io.coil-kt.coil3:coil-compose:3.4.0")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.4.0")
 
     implementation("androidx.browser:browser:1.10.0")
 
