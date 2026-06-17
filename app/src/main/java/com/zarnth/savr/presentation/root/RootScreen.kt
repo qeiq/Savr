@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -48,6 +49,7 @@ fun RootScreen(
     val state by viewModel.state.collectAsState()
     val collectionState by collectionViewModel.state.collectAsState()
     var currentTab by remember { mutableIntStateOf(0) }
+    val pendingSharedUrl = remember { mutableStateOf(sharedUrl) }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -194,7 +196,11 @@ fun RootScreen(
                 .fillMaxSize(),
             currentTab = currentTab,
             onTabChange = { currentTab = it },
-            homeScreen = { HomeScreen(sharedUrl = sharedUrl) },
+            homeScreen = {
+                val url = pendingSharedUrl.value
+                if (url != null) pendingSharedUrl.value = null
+                HomeScreen(sharedUrl = url)
+            },
             collectionsScreen = { navigateToDetail -> CollectionScreen(onCollectionClick = navigateToDetail) },
             collectionDetailScreen = { collectionId ->
                 CollectionDetailScreen(collectionId = collectionId, viewModel = collectionViewModel)
