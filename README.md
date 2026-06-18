@@ -1,12 +1,12 @@
 # Savr
 
-> A bookmark manager that actually saves what matters.
+## A bookmark manager that actually saves what matters.
 
 Savr is a minimal, no-nonsense bookmark manager born from a personal frustration, most bookmarking apps are try to do too much. I wanted something simple: paste a URL, get the title, description, and image automatically, and move on. No accounts, no sync, no clutter.
 
 It's free, open source forever, and coming soon to the Play Store.
 
-![Coming soon to Play Store](photos/coming_soon_ps.png)
+<img src="photos/coming_soon_ps.png" alt="Coming soon to Play Store" width="140">
 
 ## Features
 
@@ -19,9 +19,13 @@ It's free, open source forever, and coming soon to the Play Store.
 
 ## Screenshots
 
-| Home | Collections | Setting | Selection |
-|---|---|---|---|
-| ![Home](photos/home_screen.jpeg) | ![Collections](photos/collection_screen.jpeg) | ![Setting](photos/setting_screen.jpeg) | ![Selection](photos/delete_selection.jpeg) |
+| Home | Collections |
+|---|---|
+| ![Home](photos/home_screen.jpeg) | ![Collections](photos/collection_screen.jpeg) |
+
+| Setting | Selection |
+|---|---|
+| ![Setting](photos/setting_screen.jpeg) | ![Selection](photos/delete_selection.jpeg) |
 
 ## Tech Stack
 
