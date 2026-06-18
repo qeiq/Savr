@@ -32,12 +32,14 @@ import com.zarnth.savr.presentation.home.components.BookmarkPreviewSheet
 import com.zarnth.savr.presentation.home.components.HomeInputSheet
 import com.zarnth.savr.presentation.home.components.LoadingProgress
 import com.zarnth.savr.presentation.home.components.PhotoPreview
+import com.zarnth.savr.presentation.setting.TapAction
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeScreen(
     sharedUrl: String? = null,
+    tapAction: TapAction = TapAction.SHOW_PREVIEW,
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -102,7 +104,11 @@ fun HomeScreen(
                             Log.d("Photo Dialog", "HomeScreen: $it")
                         },
                         bodyClick = {
-                            viewModel.homeEvents(HomeEvents.BookmarkPreviewClick(item))
+                            when (tapAction) {
+                                TapAction.OPEN_BROWSER -> item.url?.let { openChromeTab(it, context) }
+                                TapAction.COPY_LINK -> item.url?.let { clipboardManager.nativeClipboard.text = it }
+                                TapAction.SHOW_PREVIEW -> viewModel.homeEvents(HomeEvents.BookmarkPreviewClick(item))
+                            }
                         },
                         onLongClick = {
                             viewModel.homeEvents(HomeEvents.ToggleSelection(item.id))

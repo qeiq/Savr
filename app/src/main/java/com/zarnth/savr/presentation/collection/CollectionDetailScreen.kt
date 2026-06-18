@@ -26,11 +26,13 @@ import com.zarnth.savr.openChromeTab
 import com.zarnth.savr.presentation.home.components.BookmarkCard
 import com.zarnth.savr.presentation.home.components.BookmarkPreviewSheet
 import com.zarnth.savr.presentation.home.components.LoadingProgress
+import com.zarnth.savr.presentation.setting.TapAction
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CollectionDetailScreen(
     collectionId: Long,
+    tapAction: TapAction = TapAction.SHOW_PREVIEW,
     viewModel: CollectionViewModel
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -79,7 +81,13 @@ fun CollectionDetailScreen(
                         title = item.title,
                         description = item.description,
                         photoClickUrl = { Log.d("CollectionDetail", "Photo click: $it") },
-                        bodyClick = { viewModel.onEvent(CollectionEvents.ShowDetailBodySheet(item)) },
+                        bodyClick = {
+                            when (tapAction) {
+                                TapAction.OPEN_BROWSER -> item.url?.let { openChromeTab(it, context) }
+                                TapAction.COPY_LINK -> item.url?.let { clipboardManager.nativeClipboard.text = it }
+                                TapAction.SHOW_PREVIEW -> viewModel.onEvent(CollectionEvents.ShowDetailBodySheet(item))
+                            }
+                        },
                         onLongClick = { viewModel.onEvent(CollectionEvents.ToggleDetailSelection(item.id)) },
                         isSelected = item.id in state.detailSelectedIds,
                         isSelectionMode = state.isDetailSelectionMode,

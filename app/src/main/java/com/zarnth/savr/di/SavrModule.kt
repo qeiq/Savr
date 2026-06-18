@@ -55,7 +55,7 @@ val savrModule = module {
     }
 
     viewModel {
-        SettingViewModel(get())
+        SettingViewModel(get(), get())
     }
 
 }

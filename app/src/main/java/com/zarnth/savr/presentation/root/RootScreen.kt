@@ -58,7 +58,7 @@ fun RootScreen(
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    SavrTheme(themeMode = settingState.themeMode) {
+    SavrTheme(themeMode = settingState.themeMode, dynamicColor = settingState.dynamicColor) {
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
@@ -204,11 +204,11 @@ fun RootScreen(
                 homeScreen = {
                     val url = pendingSharedUrl.value
                     if (url != null) pendingSharedUrl.value = null
-                    HomeScreen(sharedUrl = url)
+                    HomeScreen(sharedUrl = url, tapAction = settingState.tapAction)
                 },
                 collectionsScreen = { navigateToDetail -> CollectionScreen(onCollectionClick = navigateToDetail) },
                 collectionDetailScreen = { collectionId ->
-                    CollectionDetailScreen(collectionId = collectionId, viewModel = collectionViewModel)
+                    CollectionDetailScreen(collectionId = collectionId, tapAction = settingState.tapAction, viewModel = collectionViewModel)
                 },
                 settingsScreen = { SettingScreen(viewModel = settingViewModel) }
             )

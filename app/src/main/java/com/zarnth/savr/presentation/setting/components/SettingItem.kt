@@ -32,7 +32,7 @@ fun SettingItem(
             .clip(MaterialTheme.shapes.extraLarge)
             .clickable(onClick = onClick),
         colors = ListItemDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         headlineContent = {
             Text(

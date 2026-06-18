@@ -10,8 +10,8 @@ kotlin = "2.2.10"
 composeBom = "2026.05.01"
 
 nav3Core = "1.1.2"
-kotlinSerialization = "2.2.21"
-kotlinxSerializationCore = "1.9.0"
+kotlinSerialization = "2.4.0"
+kotlinxSerializationCore = "1.11.0"
 
 
 [libraries]
@@ -33,6 +33,7 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3Core" }
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "nav3Core" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

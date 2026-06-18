@@ -6,4 +6,12 @@ sealed class SettingEvents {
     data class SelectTheme(val themeMode: ThemeMode) : SettingEvents()
     object ShowThemeSheet : SettingEvents()
     object HideThemeSheet : SettingEvents()
+    data class SelectTapAction(val action: TapAction) : SettingEvents()
+    object ShowTapActionSheet : SettingEvents()
+    object HideTapActionSheet : SettingEvents()
+    data class ToggleDynamicColor(val enabled: Boolean) : SettingEvents()
+    object ExportData : SettingEvents()
+    object DismissExport : SettingEvents()
+    data class ImportData(val json: String) : SettingEvents()
+    object DismissImportResult : SettingEvents()
 }
