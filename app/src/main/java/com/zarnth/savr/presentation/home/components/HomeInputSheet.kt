@@ -70,7 +70,7 @@ fun HomeInputSheet(
                         Icon(
                            painter = painterResource(R.drawable.link_three),
                             contentDescription = null,
-                            modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurface
+                            modifier = Modifier.size(24.dp),    tint = MaterialTheme.colorScheme.surfaceTint,
                         )
                     },
                     placeholder = {

@@ -64,7 +64,7 @@ fun CollectionInputSheet(
                             painter = painterResource(R.drawable.bookmark_one),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.surfaceTint,
                         )
                     },
                     placeholder = {

@@ -9,7 +9,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
 import com.zarnth.savr.presentation.root.RootScreen
-import com.zarnth.savr.ui.theme.SavrTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,9 +21,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            SavrTheme {
-                RootScreen(sharedUrl = sharedUrl)
-            }
+            RootScreen(sharedUrl = sharedUrl)
         }
     }
 }
