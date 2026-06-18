@@ -19,8 +19,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
@@ -49,12 +53,15 @@ fun CollectionDetailScreen(
     val gridState = rememberLazyStaggeredGridState()
     val listState = rememberLazyListState()
     val itemCount = state.collectionBookmarks.size
+    var prevCount by rememberSaveable { mutableIntStateOf(itemCount) }
+    val reversedBookmarks = remember(state.collectionBookmarks) { state.collectionBookmarks.reversed() }
 
     LaunchedEffect(itemCount) {
-        if (itemCount > 0) {
+        if (itemCount > prevCount && itemCount > 0) {
             if (viewMode == ViewMode.GRID) gridState.animateScrollToItem(0)
             else listState.animateScrollToItem(0)
         }
+        prevCount = itemCount
     }
 
     BackHandler(enabled = state.isDetailSelectionMode) {
@@ -91,7 +98,7 @@ fun CollectionDetailScreen(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 items(
-                    items = state.collectionBookmarks.reversed(),
+                    items = reversedBookmarks,
                     key = { it.id }
                 ) { item ->
                     BookmarkCard(
@@ -122,7 +129,7 @@ fun CollectionDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(
-                    items = state.collectionBookmarks.reversed(),
+                    items = reversedBookmarks,
                     key = { it.id }
                 ) { item ->
                     BookmarkListItem(

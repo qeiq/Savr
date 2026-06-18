@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -70,7 +71,7 @@ fun BookmarkListItem(
                 onClick = onLongClick,
                 onLongClick = onLongClick
             )
-            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
     } else {
         modifier
             .fillMaxWidth()
@@ -99,29 +100,29 @@ fun BookmarkListItem(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(MaterialTheme.shapes.extraSmall)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (faviconFailed) {
+                if (faviconFailed) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(MaterialTheme.shapes.extraSmall)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
                             text = cleanHost.firstOrNull()?.uppercase() ?: "?",
                             style = MaterialTheme.typography.labelSmall
                         )
-                    } else {
-                        AsyncImage(
-                            model = "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${host}&size=128",
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clip(MaterialTheme.shapes.extraSmall),
-                            onError = { faviconFailed = true }
-                        )
                     }
+                } else {
+                    AsyncImage(
+                        model = "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${host}&size=128",
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(MaterialTheme.shapes.extraSmall),
+                        onError = { faviconFailed = true }
+                    )
                 }
                 Spacer(Modifier.width(8.dp))
                 Text(
@@ -173,8 +174,8 @@ fun BookmarkListItem(
         }
 
         // Right: image thumbnail
+        Spacer(Modifier.width(14.dp))
         if (hasImage) {
-            Spacer(Modifier.width(14.dp))
             AsyncImage(
                 model = imageUrl,
                 contentDescription = null,
@@ -194,6 +195,30 @@ fun BookmarkListItem(
                     }
                 }
             )
+        } else {
+            Box(
+                modifier = Modifier
+                    .width(120.dp)
+                    .aspectRatio(1.2f)
+                    .clip(MaterialTheme.shapes.large)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surfaceContainerHigh,
+                                MaterialTheme.colorScheme.surfaceContainerLow
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = cleanHost,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }

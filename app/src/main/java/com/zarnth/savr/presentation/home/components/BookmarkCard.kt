@@ -81,7 +81,7 @@ fun BookmarkCard(
                 onClick = onLongClick,
                 onLongClick = onLongClick
             )
-            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
             .padding(6.dp)
     } else {
         modifier

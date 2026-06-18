@@ -22,6 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,12 +66,15 @@ fun HomeScreen(
     val gridState = rememberLazyStaggeredGridState()
     val listState = rememberLazyListState()
     val itemCount = state.bookmarkData.size
+    var prevCount by rememberSaveable { mutableIntStateOf(itemCount) }
+    val reversedBookmarks = remember(state.bookmarkData) { state.bookmarkData.reversed() }
 
     LaunchedEffect(itemCount) {
-        if (itemCount > 0) {
+        if (itemCount > prevCount && itemCount > 0) {
             if (viewMode == ViewMode.GRID) gridState.animateScrollToItem(0)
             else listState.animateScrollToItem(0)
         }
+        prevCount = itemCount
     }
 
     BackHandler(enabled = state.isSelectionMode) {
@@ -109,7 +116,7 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 items(
-                    items = state.bookmarkData.reversed(),
+                    items = reversedBookmarks,
                     key = { it.id }
                 ) { item ->
                     BookmarkCard(
@@ -145,7 +152,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(
-                    items = state.bookmarkData.reversed(),
+                    items = reversedBookmarks,
                     key = { it.id }
                 ) { item ->
                     BookmarkListItem(
