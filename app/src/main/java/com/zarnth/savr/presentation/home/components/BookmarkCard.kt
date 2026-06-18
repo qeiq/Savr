@@ -64,6 +64,8 @@ fun BookmarkCard(
     }
 
     var imageFailed by remember { mutableStateOf(false) }
+    var faviconFailed by remember { mutableStateOf(false) }
+    var imageAspectRatio by remember { mutableStateOf(1.2f) }
 
     val cardModifier = if (isSelected) {
         modifier
@@ -79,7 +81,7 @@ fun BookmarkCard(
                 onClick = onLongClick,
                 onLongClick = onLongClick
             )
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
             .padding(6.dp)
     } else {
         modifier
@@ -107,7 +109,7 @@ fun BookmarkCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            if (imageFailed) {
+            if (faviconFailed) {
                 Box(
                     modifier = Modifier
                         .size(20.dp)
@@ -129,7 +131,7 @@ fun BookmarkCard(
                         .size(20.dp)
                         .clip(MaterialTheme.shapes.extraSmall),
                     onError = {
-                        imageFailed = true
+                        faviconFailed = true
                     }
                 )
             }
@@ -148,7 +150,7 @@ fun BookmarkCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1.2f)
+                .aspectRatio(imageAspectRatio)
                 .clip(MaterialTheme.shapes.extraLarge)
                 .background(
                     Brush.verticalGradient(
@@ -166,7 +168,7 @@ fun BookmarkCard(
                 AsyncImage(
                     model = imageUrl,
                     contentDescription = null,
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxSize()
                         .clickable {
@@ -174,6 +176,12 @@ fun BookmarkCard(
                         },
                     onError = {
                         imageFailed = true
+                    },
+                    onSuccess = { state ->
+                        val size = state.painter.intrinsicSize
+                        if (size.width.isFinite() && size.width > 0 && size.height > 0) {
+                            imageAspectRatio = size.width / size.height
+                        }
                     }
                 )
 

@@ -99,6 +99,24 @@ fun RootScreen(
                             }
                         },
                         actions = {
+                            val allBookmarksSelected = state.bookmarkData.isNotEmpty() && state.selectedIds.size == state.bookmarkData.size
+                            if (allBookmarksSelected) {
+                                IconButton(onClick = { viewModel.homeEvents(HomeEvents.DeselectAll) }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.deselct_all),
+                                        contentDescription = "Deselect all",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            } else {
+                                IconButton(onClick = { viewModel.homeEvents(HomeEvents.SelectAll) }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.selectall_icon),
+                                        contentDescription = "Select all",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
                             IconButton(onClick = { viewModel.homeEvents(HomeEvents.ShowCollectionPicker) }) {
                                 Icon(
                                     painter = painterResource(R.drawable.bookmark_one),
@@ -127,6 +145,24 @@ fun RootScreen(
                             }
                         },
                         actions = {
+                            val allCollectionsSelected = collectionState.collections.isNotEmpty() && collectionState.selectedIds.size == collectionState.collections.size
+                            if (allCollectionsSelected) {
+                                IconButton(onClick = { collectionViewModel.onEvent(CollectionEvents.DeselectAll) }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.deselct_all),
+                                        contentDescription = "Deselect all",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            } else {
+                                IconButton(onClick = { collectionViewModel.onEvent(CollectionEvents.SelectAll) }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.selectall_icon),
+                                        contentDescription = "Select all",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
                             IconButton(onClick = { collectionViewModel.onEvent(CollectionEvents.DeleteSelected) }) {
                                 Icon(
                                     painter = painterResource(R.drawable.delete_icon),
@@ -148,6 +184,24 @@ fun RootScreen(
                             }
                         },
                         actions = {
+                            val allDetailSelected = collectionState.collectionBookmarks.isNotEmpty() && collectionState.detailSelectedIds.size == collectionState.collectionBookmarks.size
+                            if (allDetailSelected) {
+                                IconButton(onClick = { collectionViewModel.onEvent(CollectionEvents.DeselectAllDetail) }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.deselct_all),
+                                        contentDescription = "Deselect all",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            } else {
+                                IconButton(onClick = { collectionViewModel.onEvent(CollectionEvents.SelectAllDetail) }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.selectall_icon),
+                                        contentDescription = "Select all",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
                             IconButton(
                                 onClick = {
                                     val id = collectionState.selectedCollection?.id ?: return@IconButton
@@ -204,11 +258,11 @@ fun RootScreen(
                 homeScreen = {
                     val url = pendingSharedUrl.value
                     if (url != null) pendingSharedUrl.value = null
-                    HomeScreen(sharedUrl = url, tapAction = settingState.tapAction)
+                    HomeScreen(sharedUrl = url, tapAction = settingState.tapAction, viewMode = settingState.viewMode)
                 },
                 collectionsScreen = { navigateToDetail -> CollectionScreen(onCollectionClick = navigateToDetail) },
                 collectionDetailScreen = { collectionId ->
-                    CollectionDetailScreen(collectionId = collectionId, tapAction = settingState.tapAction, viewModel = collectionViewModel)
+                    CollectionDetailScreen(collectionId = collectionId, tapAction = settingState.tapAction, viewMode = settingState.viewMode, viewModel = collectionViewModel)
                 },
                 settingsScreen = { SettingScreen(viewModel = settingViewModel) }
             )

@@ -9,9 +9,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,11 +32,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zarnth.savr.openChromeTab
 import com.zarnth.savr.presentation.home.components.BookmarkCard
+import com.zarnth.savr.presentation.home.components.BookmarkListItem
 import com.zarnth.savr.presentation.home.components.BookmarkPreviewSheet
 import com.zarnth.savr.presentation.home.components.HomeInputSheet
 import com.zarnth.savr.presentation.home.components.LoadingProgress
 import com.zarnth.savr.presentation.home.components.PhotoPreview
 import com.zarnth.savr.presentation.setting.TapAction
+import com.zarnth.savr.presentation.setting.ViewMode
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -40,6 +46,7 @@ import org.koin.androidx.compose.koinViewModel
 fun HomeScreen(
     sharedUrl: String? = null,
     tapAction: TapAction = TapAction.SHOW_PREVIEW,
+    viewMode: ViewMode = ViewMode.GRID,
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -52,6 +59,16 @@ fun HomeScreen(
     }
     val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
+    val gridState = rememberLazyStaggeredGridState()
+    val listState = rememberLazyListState()
+    val itemCount = state.bookmarkData.size
+
+    LaunchedEffect(itemCount) {
+        if (itemCount > 0) {
+            if (viewMode == ViewMode.GRID) gridState.animateScrollToItem(0)
+            else listState.animateScrollToItem(0)
+        }
+    }
 
     BackHandler(enabled = state.isSelectionMode) {
         viewModel.homeEvents(HomeEvents.ClearSelection)
@@ -82,8 +99,9 @@ fun HomeScreen(
                     )
                 }
             }
-        } else {
+        } else if (viewMode == ViewMode.GRID) {
             LazyVerticalStaggeredGrid(
+                state = gridState,
                 modifier = Modifier.fillMaxSize(),
                 columns = StaggeredGridCells.Adaptive(160.dp),
                 contentPadding = PaddingValues(8.dp),
@@ -102,6 +120,41 @@ fun HomeScreen(
                         photoClickUrl = {
                             viewModel.homeEvents(HomeEvents.PreviewImageClick(url = it))
                             Log.d("Photo Dialog", "HomeScreen: $it")
+                        },
+                        bodyClick = {
+                            when (tapAction) {
+                                TapAction.OPEN_BROWSER -> item.url?.let { openChromeTab(it, context) }
+                                TapAction.COPY_LINK -> item.url?.let { clipboardManager.nativeClipboard.text = it }
+                                TapAction.SHOW_PREVIEW -> viewModel.homeEvents(HomeEvents.BookmarkPreviewClick(item))
+                            }
+                        },
+                        onLongClick = {
+                            viewModel.homeEvents(HomeEvents.ToggleSelection(item.id))
+                        },
+                        isSelected = item.id in state.selectedIds,
+                        isSelectionMode = state.isSelectionMode,
+                        url = item.url
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(
+                    items = state.bookmarkData.reversed(),
+                    key = { it.id }
+                ) { item ->
+                    BookmarkListItem(
+                        modifier = Modifier.animateItem(),
+                        imageUrl = item.imageUrl,
+                        title = item.title,
+                        description = item.description,
+                        photoClickUrl = {
+                            viewModel.homeEvents(HomeEvents.PreviewImageClick(url = it))
                         },
                         bodyClick = {
                             when (tapAction) {

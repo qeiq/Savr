@@ -14,6 +14,8 @@ sealed class HomeEvents {
     object BookmarkPreviewDismissClick : HomeEvents()
 
     data class ToggleSelection(val id: Long) : HomeEvents()
+    object SelectAll : HomeEvents()
+    object DeselectAll : HomeEvents()
     object DeleteSelected : HomeEvents()
     object ClearSelection : HomeEvents()
     object ShowCollectionPicker : HomeEvents()

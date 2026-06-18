@@ -28,7 +28,8 @@ class SettingViewModel(
         SettingState(
             themeMode = settingsRepository.getThemeMode(),
             tapAction = settingsRepository.getTapAction(),
-            dynamicColor = settingsRepository.getDynamicColor()
+            dynamicColor = settingsRepository.getDynamicColor(),
+            viewMode = settingsRepository.getViewMode()
         )
     )
     val state = _state.asStateFlow()
@@ -78,6 +79,24 @@ class SettingViewModel(
             is SettingEvents.ToggleDynamicColor -> {
                 settingsRepository.setDynamicColor(event.enabled)
                 _state.update { it.copy(dynamicColor = event.enabled) }
+            }
+
+            is SettingEvents.ToggleViewMode -> {
+                settingsRepository.setViewMode(event.viewMode)
+                _state.update {
+                    it.copy(
+                        viewMode = event.viewMode,
+                        showViewModeSheet = false
+                    )
+                }
+            }
+
+            SettingEvents.ShowViewModeSheet -> {
+                _state.update { it.copy(showViewModeSheet = true) }
+            }
+
+            SettingEvents.HideViewModeSheet -> {
+                _state.update { it.copy(showViewModeSheet = false) }
             }
 
             SettingEvents.DismissExport -> {

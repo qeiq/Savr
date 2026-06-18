@@ -32,6 +32,7 @@ import com.zarnth.savr.presentation.setting.components.SectionHeader
 import com.zarnth.savr.presentation.setting.components.SettingItem
 import com.zarnth.savr.presentation.setting.components.TapActionSheet
 import com.zarnth.savr.presentation.setting.components.ThemeSheet
+import com.zarnth.savr.presentation.setting.components.ViewModeSheet
 import com.zarnth.savr.ui.theme.ThemeMode
 import org.koin.androidx.compose.koinViewModel
 
@@ -125,6 +126,13 @@ fun SettingScreen(
                 subtitle = tapActionLabel,
                 onClick = { viewModel.onEvent(SettingEvents.ShowTapActionSheet) }
             )
+            Spacer(Modifier.height(4.dp))
+            SettingItem(
+                icon = if (state.viewMode == ViewMode.GRID) R.drawable.grid_icon else R.drawable.list_icon,
+                title = "View mode",
+                subtitle = if (state.viewMode == ViewMode.GRID) "Grid" else "List",
+                onClick = { viewModel.onEvent(SettingEvents.ShowViewModeSheet) }
+            )
             Spacer(Modifier.height(12.dp))
 
             SectionHeader("Data")
@@ -196,6 +204,14 @@ fun SettingScreen(
             current = state.tapAction,
             onSelect = { viewModel.onEvent(SettingEvents.SelectTapAction(it)) },
             onDismiss = { viewModel.onEvent(SettingEvents.HideTapActionSheet) }
+        )
+    }
+
+    if (state.showViewModeSheet) {
+        ViewModeSheet(
+            current = state.viewMode,
+            onSelect = { viewModel.onEvent(SettingEvents.ToggleViewMode(it)) },
+            onDismiss = { viewModel.onEvent(SettingEvents.HideViewModeSheet) }
         )
     }
 

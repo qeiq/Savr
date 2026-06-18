@@ -4,6 +4,8 @@ import com.zarnth.savr.ui.theme.ThemeMode
 
 enum class TapAction { SHOW_PREVIEW, OPEN_BROWSER, COPY_LINK }
 
+enum class ViewMode { GRID, LIST }
+
 sealed class ExportState {
     object Idle : ExportState()
     object Loading : ExportState()
@@ -24,6 +26,8 @@ data class SettingState(
     val tapAction: TapAction = TapAction.SHOW_PREVIEW,
     val showTapActionSheet: Boolean = false,
     val dynamicColor: Boolean = true,
+    val viewMode: ViewMode = ViewMode.GRID,
+    val showViewModeSheet: Boolean = false,
     val exportState: ExportState = ExportState.Idle,
     val importState: ImportState = ImportState.Idle
 )

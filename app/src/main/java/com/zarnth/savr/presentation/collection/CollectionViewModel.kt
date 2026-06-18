@@ -64,6 +64,20 @@ class CollectionViewModel(
                 _state.update { it.copy(selectedIds = emptySet(), isSelectionMode = false) }
             }
 
+            CollectionEvents.SelectAll -> {
+                val allIds = _state.value.collections.map { it.id }.toSet()
+                _state.update {
+                    it.copy(
+                        selectedIds = allIds,
+                        isSelectionMode = allIds.isNotEmpty()
+                    )
+                }
+            }
+
+            CollectionEvents.DeselectAll -> {
+                _state.update { it.copy(selectedIds = emptySet(), isSelectionMode = false) }
+            }
+
             CollectionEvents.DeleteSelected -> {
                 deleteSelected()
             }
@@ -96,6 +110,20 @@ class CollectionViewModel(
             }
 
             CollectionEvents.ClearDetailSelection -> {
+                _state.update { it.copy(detailSelectedIds = emptySet(), isDetailSelectionMode = false) }
+            }
+
+            CollectionEvents.SelectAllDetail -> {
+                val allIds = _state.value.collectionBookmarks.map { it.id }.toSet()
+                _state.update {
+                    it.copy(
+                        detailSelectedIds = allIds,
+                        isDetailSelectionMode = allIds.isNotEmpty()
+                    )
+                }
+            }
+
+            CollectionEvents.DeselectAllDetail -> {
                 _state.update { it.copy(detailSelectedIds = emptySet(), isDetailSelectionMode = false) }
             }
 

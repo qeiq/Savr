@@ -107,6 +107,25 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
                 }
             }
 
+            HomeEvents.SelectAll -> {
+                val allIds = _state.value.bookmarkData.map { it.id }.toSet()
+                _state.update {
+                    it.copy(
+                        selectedIds = allIds,
+                        isSelectionMode = allIds.isNotEmpty()
+                    )
+                }
+            }
+
+            HomeEvents.DeselectAll -> {
+                _state.update {
+                    it.copy(
+                        selectedIds = emptySet(),
+                        isSelectionMode = false
+                    )
+                }
+            }
+
             HomeEvents.ShowCollectionPicker -> {
                 _state.update { it.copy(showCollectionPicker = true) }
             }

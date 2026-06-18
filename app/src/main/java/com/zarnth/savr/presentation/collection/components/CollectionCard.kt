@@ -59,7 +59,7 @@ fun CollectionCard(
                 onClick = onLongClick,
                 onLongClick = onLongClick
             )
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
             .padding(6.dp)
     } else {
         modifier
