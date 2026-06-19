@@ -101,23 +101,25 @@ fun SettingScreen(
                 subtitle = themeLabel,
                 onClick = { viewModel.onEvent(SettingEvents.ShowThemeSheet) }
             )
-            Spacer(Modifier.height(4.dp))
-            SettingItem(
-                icon = R.drawable.dynamic_one,
-                title = "Dynamic color",
-                subtitle = if (state.dynamicColor) "On" else "Off",
-                trailing = {
-                    Switch(
-                        checked = state.dynamicColor,
-                        onCheckedChange = { viewModel.onEvent(SettingEvents.ToggleDynamicColor(it)) },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.primary,
-                            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+            if (state.isDynamicColorSupported) {
+                Spacer(Modifier.height(4.dp))
+                SettingItem(
+                    icon = R.drawable.dynamic_one,
+                    title = "Dynamic color",
+                    subtitle = if (state.dynamicColor) "On" else "Off",
+                    trailing = {
+                        Switch(
+                            checked = state.dynamicColor,
+                            onCheckedChange = { viewModel.onEvent(SettingEvents.ToggleDynamicColor(it)) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         )
-                    )
-                },
-                onClick = { viewModel.onEvent(SettingEvents.ToggleDynamicColor(!state.dynamicColor)) }
-            )
+                    },
+                    onClick = { viewModel.onEvent(SettingEvents.ToggleDynamicColor(!state.dynamicColor)) }
+                )
+            }
             Spacer(Modifier.height(12.dp))
             SectionHeader("General")
             SettingItem(

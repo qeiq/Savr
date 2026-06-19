@@ -1,5 +1,7 @@
 package com.zarnth.savr.presentation.setting
 
+import android.os.Build
+import android.os.Build.VERSION_CODES
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zarnth.savr.data.local.BackupBookmark
@@ -29,6 +31,7 @@ class SettingViewModel(
             themeMode = settingsRepository.getThemeMode(),
             tapAction = settingsRepository.getTapAction(),
             dynamicColor = settingsRepository.getDynamicColor(),
+            isDynamicColorSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
             viewMode = settingsRepository.getViewMode()
         )
     )

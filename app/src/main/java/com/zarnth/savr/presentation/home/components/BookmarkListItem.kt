@@ -181,7 +181,7 @@ fun BookmarkListItem(
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
-                    .width(120.dp)
+                    .width(150.dp)
                     .aspectRatio(imageAspectRatio)
                     .clip(MaterialTheme.shapes.large)
                     .clickable {
@@ -198,7 +198,7 @@ fun BookmarkListItem(
         } else {
             Box(
                 modifier = Modifier
-                    .width(120.dp)
+                    .width(150.dp)
                     .aspectRatio(1.2f)
                     .clip(MaterialTheme.shapes.large)
                     .background(

@@ -26,6 +26,7 @@ data class SettingState(
     val tapAction: TapAction = TapAction.SHOW_PREVIEW,
     val showTapActionSheet: Boolean = false,
     val dynamicColor: Boolean = true,
+    val isDynamicColorSupported: Boolean = false,
     val viewMode: ViewMode = ViewMode.GRID,
     val showViewModeSheet: Boolean = false,
     val exportState: ExportState = ExportState.Idle,
