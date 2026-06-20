@@ -16,8 +16,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -34,6 +39,13 @@ fun CollectionInputSheet(
     onSaveClick: () -> Unit
 ) {
     if (showBottomSheet) {
+        val focusRequester = remember { FocusRequester() }
+        val keyboardController = LocalSoftwareKeyboardController.current
+
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+        }
+
         ModalBottomSheet(
             onDismissRequest = onDismissRequest
         ) {
@@ -57,7 +69,7 @@ fun CollectionInputSheet(
                 OutlinedTextField(
                     value = value,
                     onValueChange = onTextChange,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                     singleLine = true,
                     leadingIcon = {
                         Icon(
