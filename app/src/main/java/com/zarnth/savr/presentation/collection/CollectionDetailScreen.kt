@@ -36,6 +36,8 @@ import com.zarnth.savr.presentation.home.components.BookmarkCard
 import com.zarnth.savr.presentation.home.components.BookmarkListItem
 import com.zarnth.savr.presentation.home.components.BookmarkPreviewSheet
 import com.zarnth.savr.presentation.home.components.LoadingProgress
+import com.zarnth.savr.presentation.search.SearchResults
+import com.zarnth.savr.domain.model.Bookmark
 import com.zarnth.savr.presentation.setting.TapAction
 import com.zarnth.savr.presentation.setting.ViewMode
 
@@ -45,7 +47,9 @@ fun CollectionDetailScreen(
     collectionId: Long,
     tapAction: TapAction = TapAction.SHOW_PREVIEW,
     viewMode: ViewMode = ViewMode.GRID,
-    viewModel: CollectionViewModel
+    viewModel: CollectionViewModel,
+    searchResults: List<Bookmark>? = null,
+    searchQuery: String = ""
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -81,86 +85,106 @@ fun CollectionDetailScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (state.collectionBookmarks.isEmpty() && !state.isDetailLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No bookmarks in this collection",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else if (viewMode == ViewMode.GRID) {
-            LazyVerticalStaggeredGrid(
-                state = gridState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 8.dp),
-                columns = StaggeredGridCells.Adaptive(180.dp),
-                contentPadding = PaddingValues(8.dp),
-                verticalItemSpacing = 6.dp,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                items(
-                    items = state.collectionBookmarks,
-                    key = { it.id }
-                ) { item ->
-                    BookmarkCard(
-                        modifier = Modifier.animateItem(),
-                        imageUrl = item.imageUrl,
-                        title = item.title,
-                        description = item.description,
-                        photoClickUrl = { Log.d("CollectionDetail", "Photo click: $it") },
-                        bodyClick = {
-                            when (tapAction) {
-                                TapAction.OPEN_BROWSER -> item.url?.let { openChromeTab(it, context) }
-                                TapAction.COPY_LINK -> item.url?.let { clipboardManager.nativeClipboard.text = it }
-                                TapAction.SHOW_PREVIEW -> viewModel.onEvent(CollectionEvents.ShowDetailBodySheet(item))
-                            }
-                        },
-                        onLongClick = { viewModel.onEvent(CollectionEvents.ToggleDetailSelection(item.id)) },
-                        isSelected = item.id in state.detailSelectedIds,
-                        isSelectionMode = state.isDetailSelectionMode,
-                        url = item.url
+    if (searchResults != null) {
+        SearchResults(
+            results = searchResults,
+            query = searchQuery,
+            viewMode = viewMode,
+            selectedIds = state.detailSelectedIds,
+            isSelectionMode = state.isDetailSelectionMode,
+            isLoading = state.isDetailLoading,
+            onBodyClick = { item ->
+                when (tapAction) {
+                    TapAction.OPEN_BROWSER -> item.url?.let { openChromeTab(it, context) }
+                    TapAction.COPY_LINK -> item.url?.let { clipboardManager.nativeClipboard.text = it }
+                    TapAction.SHOW_PREVIEW -> viewModel.onEvent(CollectionEvents.ShowDetailBodySheet(item))
+                }
+            },
+            onPhotoClick = { Log.d("CollectionDetail", "Photo click: $it") },
+            onLongClick = { viewModel.onEvent(CollectionEvents.ToggleDetailSelection(it)) }
+        )
+    } else {
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (state.collectionBookmarks.isEmpty() && !state.isDetailLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No bookmarks in this collection",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
-        } else {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                items(
-                    items = state.collectionBookmarks,
-                    key = { it.id }
-                ) { item ->
-                    BookmarkListItem(
-                        modifier = Modifier.animateItem(),
-                        imageUrl = item.imageUrl,
-                        title = item.title,
-                        description = item.description,
-                        photoClickUrl = { Log.d("CollectionDetail", "Photo click: $it") },
-                        bodyClick = {
-                            when (tapAction) {
-                                TapAction.OPEN_BROWSER -> item.url?.let { openChromeTab(it, context) }
-                                TapAction.COPY_LINK -> item.url?.let { clipboardManager.nativeClipboard.text = it }
-                                TapAction.SHOW_PREVIEW -> viewModel.onEvent(CollectionEvents.ShowDetailBodySheet(item))
-                            }
-                        },
-                        onLongClick = { viewModel.onEvent(CollectionEvents.ToggleDetailSelection(item.id)) },
-                        isSelected = item.id in state.detailSelectedIds,
-                        isSelectionMode = state.isDetailSelectionMode,
-                        url = item.url
-                    )
+            } else if (viewMode == ViewMode.GRID) {
+                LazyVerticalStaggeredGrid(
+                    state = gridState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 8.dp),
+                    columns = StaggeredGridCells.Adaptive(180.dp),
+                    contentPadding = PaddingValues(8.dp),
+                    verticalItemSpacing = 6.dp,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(
+                        items = state.collectionBookmarks,
+                        key = { it.id }
+                    ) { item ->
+                        BookmarkCard(
+                            modifier = Modifier.animateItem(),
+                            imageUrl = item.imageUrl,
+                            title = item.title,
+                            description = item.description,
+                            photoClickUrl = { Log.d("CollectionDetail", "Photo click: $it") },
+                            bodyClick = {
+                                when (tapAction) {
+                                    TapAction.OPEN_BROWSER -> item.url?.let { openChromeTab(it, context) }
+                                    TapAction.COPY_LINK -> item.url?.let { clipboardManager.nativeClipboard.text = it }
+                                    TapAction.SHOW_PREVIEW -> viewModel.onEvent(CollectionEvents.ShowDetailBodySheet(item))
+                                }
+                            },
+                            onLongClick = { viewModel.onEvent(CollectionEvents.ToggleDetailSelection(item.id)) },
+                            isSelected = item.id in state.detailSelectedIds,
+                            isSelectionMode = state.isDetailSelectionMode,
+                            url = item.url
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(
+                        items = state.collectionBookmarks,
+                        key = { it.id }
+                    ) { item ->
+                        BookmarkListItem(
+                            modifier = Modifier.animateItem(),
+                            imageUrl = item.imageUrl,
+                            title = item.title,
+                            description = item.description,
+                            photoClickUrl = { Log.d("CollectionDetail", "Photo click: $it") },
+                            bodyClick = {
+                                when (tapAction) {
+                                    TapAction.OPEN_BROWSER -> item.url?.let { openChromeTab(it, context) }
+                                    TapAction.COPY_LINK -> item.url?.let { clipboardManager.nativeClipboard.text = it }
+                                    TapAction.SHOW_PREVIEW -> viewModel.onEvent(CollectionEvents.ShowDetailBodySheet(item))
+                                }
+                            },
+                            onLongClick = { viewModel.onEvent(CollectionEvents.ToggleDetailSelection(item.id)) },
+                            isSelected = item.id in state.detailSelectedIds,
+                            isSelectionMode = state.isDetailSelectionMode,
+                            url = item.url
+                        )
+                    }
                 }
             }
+            LoadingProgress(state.isDetailLoading)
         }
-        LoadingProgress(state.isDetailLoading)
     }
 
     BookmarkPreviewSheet(
