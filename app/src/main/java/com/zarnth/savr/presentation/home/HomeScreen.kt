@@ -67,7 +67,6 @@ fun HomeScreen(
     val listState = rememberLazyListState()
     val itemCount = state.bookmarkData.size
     var prevCount by rememberSaveable { mutableIntStateOf(itemCount) }
-    val reversedBookmarks = remember(state.bookmarkData) { state.bookmarkData.reversed() }
 
     LaunchedEffect(itemCount) {
         if (itemCount > prevCount && itemCount > 0) {
@@ -75,6 +74,13 @@ fun HomeScreen(
             else listState.animateScrollToItem(0)
         }
         prevCount = itemCount
+    }
+
+    LaunchedEffect(state.sortOrder) {
+        if (itemCount > 0) {
+            if (viewMode == ViewMode.GRID) gridState.scrollToItem(0)
+            else listState.scrollToItem(0)
+        }
     }
 
     BackHandler(enabled = state.isSelectionMode) {
@@ -116,7 +122,7 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 items(
-                    items = reversedBookmarks,
+                    items = state.bookmarkData,
                     key = { it.id }
                 ) { item ->
                     BookmarkCard(
@@ -152,7 +158,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(
-                    items = reversedBookmarks,
+                    items = state.bookmarkData,
                     key = { it.id }
                 ) { item ->
                     BookmarkListItem(

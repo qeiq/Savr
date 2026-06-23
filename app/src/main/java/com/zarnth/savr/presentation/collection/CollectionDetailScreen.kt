@@ -54,7 +54,7 @@ fun CollectionDetailScreen(
     val listState = rememberLazyListState()
     val itemCount = state.collectionBookmarks.size
     var prevCount by rememberSaveable { mutableIntStateOf(itemCount) }
-    val reversedBookmarks = remember(state.collectionBookmarks) { state.collectionBookmarks.reversed() }
+
 
     LaunchedEffect(itemCount) {
         if (itemCount > prevCount && itemCount > 0) {
@@ -62,6 +62,13 @@ fun CollectionDetailScreen(
             else listState.animateScrollToItem(0)
         }
         prevCount = itemCount
+    }
+
+    LaunchedEffect(state.sortOrder) {
+        if (itemCount > 0) {
+            if (viewMode == ViewMode.GRID) gridState.scrollToItem(0)
+            else listState.scrollToItem(0)
+        }
     }
 
     BackHandler(enabled = state.isDetailSelectionMode) {
@@ -98,7 +105,7 @@ fun CollectionDetailScreen(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 items(
-                    items = reversedBookmarks,
+                    items = state.collectionBookmarks,
                     key = { it.id }
                 ) { item ->
                     BookmarkCard(
@@ -129,7 +136,7 @@ fun CollectionDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(
-                    items = reversedBookmarks,
+                    items = state.collectionBookmarks,
                     key = { it.id }
                 ) { item ->
                     BookmarkListItem(

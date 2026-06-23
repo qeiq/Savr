@@ -2,6 +2,7 @@ package com.zarnth.savr.presentation.collection
 
 import com.zarnth.savr.domain.model.Bookmark
 import com.zarnth.savr.domain.model.Collection
+import com.zarnth.savr.presentation.setting.SortOrder
 
 sealed class CollectionEvents {
     data class InputNameChanged(val name: String) : CollectionEvents()
@@ -22,4 +23,7 @@ sealed class CollectionEvents {
     object DeselectAllDetail : CollectionEvents()
     object ClearDetailSelection : CollectionEvents()
     data class RemoveSelectedFromCollection(val collectionId: Long) : CollectionEvents()
+    data class SetSortOrder(val sortOrder: SortOrder) : CollectionEvents()
+    object ShowSortSheet : CollectionEvents()
+    object HideSortSheet : CollectionEvents()
 }

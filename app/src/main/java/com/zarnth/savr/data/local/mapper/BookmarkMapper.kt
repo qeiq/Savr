@@ -10,7 +10,8 @@ fun BookmarkEntity.toDomain(): Bookmark {
         url = url,
         title = title,
         description = description,
-        imageUrl = imageUrl
+        imageUrl = imageUrl,
+        createdAt = createdAt
     )
 }
 
@@ -20,6 +21,7 @@ fun Bookmark.toEntity(): BookmarkEntity {
         url = url,
         title = title,
         description = description,
-        imageUrl = imageUrl
+        imageUrl = imageUrl,
+        createdAt = createdAt
     )
 }

@@ -39,6 +39,8 @@ import com.zarnth.savr.presentation.home.HomeScreen
 import com.zarnth.savr.presentation.home.HomeViewModel
 import com.zarnth.savr.presentation.setting.SettingScreen
 import com.zarnth.savr.presentation.setting.SettingViewModel
+import com.zarnth.savr.presentation.setting.SortOrder
+import com.zarnth.savr.presentation.setting.components.SortSheet
 import com.zarnth.savr.ui.theme.SavrTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -216,9 +218,27 @@ fun RootScreen(
                         }
                     )
                 } else {
+                    val showSortButton = currentTab == 0 || (currentTab == 1 && collectionState.selectedCollection != null)
                     LargeTopAppBar(
                         scrollBehavior = scrollBehavior,
-                        title = { Text(if (currentTab == 0) "Savr Bookmarks" else bottomAppBarItems[currentTab].title) }
+                        title = { Text(if (currentTab == 0) "Savr Bookmarks" else bottomAppBarItems[currentTab].title) },
+                        actions = {
+                            if (showSortButton) {
+                                IconButton(onClick = {
+                                    if (currentTab == 0) {
+                                        viewModel.homeEvents(HomeEvents.ShowSortSheet)
+                                    } else {
+                                        collectionViewModel.onEvent(CollectionEvents.ShowSortSheet)
+                                    }
+                                }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.filter_icon),
+                                        contentDescription = "Sort",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                        }
                     )
                 }
             },
@@ -273,6 +293,22 @@ fun RootScreen(
                 collections = state.collections,
                 onSelectCollection = { viewModel.homeEvents(HomeEvents.AddToCollection(it)) },
                 onDismiss = { viewModel.homeEvents(HomeEvents.HideCollectionPicker) }
+            )
+        }
+
+        if (state.showSortSheet) {
+            SortSheet(
+                current = state.sortOrder,
+                onSelect = { viewModel.homeEvents(HomeEvents.SetSortOrder(it)) },
+                onDismiss = { viewModel.homeEvents(HomeEvents.HideSortSheet) }
+            )
+        }
+
+        if (collectionState.showSortSheet) {
+            SortSheet(
+                current = collectionState.sortOrder,
+                onSelect = { collectionViewModel.onEvent(CollectionEvents.SetSortOrder(it)) },
+                onDismiss = { collectionViewModel.onEvent(CollectionEvents.HideSortSheet) }
             )
         }
     }

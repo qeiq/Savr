@@ -1,6 +1,7 @@
 package com.zarnth.savr.presentation.home
 
 import com.zarnth.savr.domain.model.Bookmark
+import com.zarnth.savr.presentation.setting.SortOrder
 
 sealed class HomeEvents {
     data class OnTextFieldValueChange(val text: String) : HomeEvents()
@@ -21,4 +22,7 @@ sealed class HomeEvents {
     object ShowCollectionPicker : HomeEvents()
     object HideCollectionPicker : HomeEvents()
     data class AddToCollection(val collectionId: Long) : HomeEvents()
+    data class SetSortOrder(val sortOrder: SortOrder) : HomeEvents()
+    object ShowSortSheet : HomeEvents()
+    object HideSortSheet : HomeEvents()
 }

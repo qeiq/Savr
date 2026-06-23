@@ -7,6 +7,7 @@ import com.zarnth.savr.domain.model.Bookmark
 import com.zarnth.savr.domain.model.Collection
 import com.zarnth.savr.domain.repository.BookmarkRepository
 import com.zarnth.savr.link_fetcher.LinkMetadataParser
+import com.zarnth.savr.presentation.setting.SortOrder
 import com.zarnth.savr.utils.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +19,7 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
     val state = _state.asStateFlow()
 
     val parser = LinkMetadataParser()
+    private var rawBookmarks: List<Bookmark> = emptyList()
 
     init {
         loadBookmarks()
@@ -136,6 +138,24 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
 
             is HomeEvents.AddToCollection -> {
                 addSelectedToCollection(events.collectionId)
+            }
+
+            is HomeEvents.SetSortOrder -> {
+                _state.update {
+                    it.copy(
+                        sortOrder = events.sortOrder,
+                        showSortSheet = false,
+                        bookmarkData = sortBookmarks(rawBookmarks, events.sortOrder)
+                    )
+                }
+            }
+
+            HomeEvents.ShowSortSheet -> {
+                _state.update { it.copy(showSortSheet = true) }
+            }
+
+            HomeEvents.HideSortSheet -> {
+                _state.update { it.copy(showSortSheet = false) }
             }
         }
     }
@@ -258,10 +278,13 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
                     }
 
                     is Resource.Success<*> -> {
+                        val items = data.data ?: emptyList()
+                        rawBookmarks = items
+                        val sortOrder = _state.value.sortOrder
                         _state.update {
                             it.copy(
                                 isLoading = false,
-                                bookmarkData = data.data ?: emptyList()
+                                bookmarkData = sortBookmarks(items, sortOrder)
                             )
                         }
                         Log.d("BRO", "Madafaka why isnt it Parsed? : ${data.data}")
@@ -271,5 +294,12 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
         }
     }
 
-
+    private fun sortBookmarks(bookmarks: List<Bookmark>, sortOrder: SortOrder): List<Bookmark> {
+        return when (sortOrder) {
+            SortOrder.DATE_NEWEST -> bookmarks.sortedByDescending { it.createdAt }
+            SortOrder.DATE_OLDEST -> bookmarks.sortedBy { it.createdAt }
+            SortOrder.TITLE_ASC -> bookmarks.sortedBy { it.title?.lowercase() }
+            SortOrder.TITLE_DESC -> bookmarks.sortedByDescending { it.title?.lowercase() }
+        }
+    }
 }

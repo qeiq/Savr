@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.zarnth.savr.domain.model.Bookmark
 import com.zarnth.savr.domain.model.Collection
 import com.zarnth.savr.domain.repository.BookmarkRepository
+import com.zarnth.savr.presentation.setting.SortOrder
 import com.zarnth.savr.utils.Resource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,7 @@ class CollectionViewModel(
     private val _state = MutableStateFlow(CollectionState())
     val state = _state.asStateFlow()
     private var collectionJob: Job? = null
+    private var rawCollectionBookmarks: List<Bookmark> = emptyList()
 
     init {
         loadCollections()
@@ -130,6 +132,24 @@ class CollectionViewModel(
             is CollectionEvents.RemoveSelectedFromCollection -> {
                 removeSelectedFromCollection(event.collectionId)
             }
+
+            is CollectionEvents.SetSortOrder -> {
+                _state.update {
+                    it.copy(
+                        sortOrder = event.sortOrder,
+                        showSortSheet = false,
+                        collectionBookmarks = sortBookmarks(rawCollectionBookmarks, event.sortOrder)
+                    )
+                }
+            }
+
+            CollectionEvents.ShowSortSheet -> {
+                _state.update { it.copy(showSortSheet = true) }
+            }
+
+            CollectionEvents.HideSortSheet -> {
+                _state.update { it.copy(showSortSheet = false) }
+            }
         }
     }
 
@@ -146,7 +166,12 @@ class CollectionViewModel(
                 when (resource) {
                     is Resource.Loading -> _state.update { it.copy(isDetailLoading = true) }
                     is Resource.Error -> _state.update { it.copy(isDetailLoading = false, error = resource.errorMessage ?: "Error") }
-                    is Resource.Success -> _state.update { it.copy(isDetailLoading = false, collectionBookmarks = resource.data ?: emptyList()) }
+                    is Resource.Success -> {
+                        val items = resource.data ?: emptyList()
+                        rawCollectionBookmarks = items
+                        val sortOrder = _state.value.sortOrder
+                        _state.update { it.copy(isDetailLoading = false, collectionBookmarks = sortBookmarks(items, sortOrder)) }
+                    }
                 }
             }
         }
@@ -196,6 +221,15 @@ class CollectionViewModel(
                     is Resource.Success -> _state.update { it.copy(isLoading = false, collections = resource.data ?: emptyList()) }
                 }
             }
+        }
+    }
+
+    private fun sortBookmarks(bookmarks: List<Bookmark>, sortOrder: SortOrder): List<Bookmark> {
+        return when (sortOrder) {
+            SortOrder.DATE_NEWEST -> bookmarks.sortedByDescending { it.createdAt }
+            SortOrder.DATE_OLDEST -> bookmarks.sortedBy { it.createdAt }
+            SortOrder.TITLE_ASC -> bookmarks.sortedBy { it.title?.lowercase() }
+            SortOrder.TITLE_DESC -> bookmarks.sortedByDescending { it.title?.lowercase() }
         }
     }
 }

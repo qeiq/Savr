@@ -1,6 +1,7 @@
 package com.zarnth.savr.presentation.home
 
 import com.zarnth.savr.domain.model.Bookmark
+import com.zarnth.savr.presentation.setting.SortOrder
 
 data class HomeState(
     val isLoading: Boolean = false,
@@ -15,5 +16,7 @@ data class HomeState(
     val selectedIds: Set<Long> = emptySet(),
     val isSelectionMode: Boolean = false,
     val showCollectionPicker: Boolean = false,
-    val collections: List<com.zarnth.savr.domain.model.Collection> = emptyList()
+    val collections: List<com.zarnth.savr.domain.model.Collection> = emptyList(),
+    val sortOrder: SortOrder = SortOrder.DATE_NEWEST,
+    val showSortSheet: Boolean = false
 )
