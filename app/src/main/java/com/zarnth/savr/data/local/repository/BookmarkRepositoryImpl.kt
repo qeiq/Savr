@@ -20,7 +20,9 @@ class BookmarkRepositoryImpl(
 ) : BookmarkRepository {
 
     override suspend fun insert(bookmark: Bookmark) {
-        dao.insert(bookmark.toEntity())
+        if (!dao.existsByUrl(bookmark.url)) {
+            dao.insert(bookmark.toEntity())
+        }
     }
 
     override suspend fun deleteBookmarks(bookmarks: List<Bookmark>) {

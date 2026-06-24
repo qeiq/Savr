@@ -133,7 +133,7 @@ fun RootScreen(
                 }
             },
             topBar = {
-                if (state.isSelectionMode) {
+                if (state.isSelectionMode && !isSearching && !isCollectionSearching) {
                     LargeTopAppBar(
                         scrollBehavior = scrollBehavior,
                         title = { Text("Selected ${state.selectedIds.size}") },
@@ -180,7 +180,7 @@ fun RootScreen(
                             }
                         }
                     )
-                } else if (collectionState.isSelectionMode) {
+                } else if (collectionState.isSelectionMode && !isSearching && !isCollectionSearching) {
                     LargeTopAppBar(
                         scrollBehavior = scrollBehavior,
                         title = { Text("Selected ${collectionState.selectedIds.size}") },
@@ -220,7 +220,7 @@ fun RootScreen(
                             }
                         }
                     )
-                } else if (collectionState.isDetailSelectionMode) {
+                } else if (collectionState.isDetailSelectionMode && !isSearching && !isCollectionSearching) {
                     LargeTopAppBar(
                         scrollBehavior = scrollBehavior,
                         title = { Text("Selected ${collectionState.detailSelectedIds.size}") },
@@ -352,9 +352,11 @@ fun RootScreen(
                                     if (currentTab == 0) {
                                         isSearching = true
                                         searchViewModel.onQueryChange("")
+                                        viewModel.homeEvents(HomeEvents.ClearSelection)
                                     } else {
                                         isCollectionSearching = true
                                         collectionSearchQuery = ""
+                                        collectionViewModel.onEvent(CollectionEvents.ClearDetailSelection)
                                     }
                                 }) {
                                     Icon(
