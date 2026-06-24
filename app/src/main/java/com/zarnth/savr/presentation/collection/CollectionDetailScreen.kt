@@ -119,9 +119,7 @@ fun CollectionDetailScreen(
             } else if (viewMode == ViewMode.GRID) {
                 LazyVerticalStaggeredGrid(
                     state = gridState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 8.dp),
+                    modifier = Modifier.fillMaxSize(),
                     columns = StaggeredGridCells.Adaptive(180.dp),
                     contentPadding = PaddingValues(8.dp),
                     verticalItemSpacing = 6.dp,

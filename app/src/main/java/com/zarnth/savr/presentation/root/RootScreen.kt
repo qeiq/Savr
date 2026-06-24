@@ -64,12 +64,12 @@ fun RootScreen(
     sharedUrl: String? = null,
     viewModel: HomeViewModel = koinViewModel(),
     collectionViewModel: CollectionViewModel = koinViewModel(),
-    settingViewModel: SettingViewModel = koinViewModel()
+    settingViewModel: SettingViewModel = koinViewModel(),
+    searchViewModel: SearchViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val collectionState by collectionViewModel.state.collectAsState()
     val settingState by settingViewModel.state.collectAsState()
-    val searchViewModel: SearchViewModel = koinViewModel()
     val searchState by searchViewModel.state.collectAsState()
     var currentTab by rememberSaveable { mutableIntStateOf(0) }
     var isSearching by remember { mutableStateOf(false) }
@@ -79,7 +79,11 @@ fun RootScreen(
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
-    val collectionSearchResults = remember(collectionState.collectionBookmarks, collectionSearchQuery, isCollectionSearching) {
+    val collectionSearchResults = remember(
+        collectionState.collectionBookmarks,
+        collectionSearchQuery,
+        isCollectionSearching
+    ) {
         if (!isCollectionSearching) null
         else if (collectionSearchQuery.isBlank()) collectionState.collectionBookmarks
         else collectionState.collectionBookmarks.filter {
@@ -142,7 +146,8 @@ fun RootScreen(
                             }
                         },
                         actions = {
-                            val allBookmarksSelected = state.bookmarkData.isNotEmpty() && state.selectedIds.size == state.bookmarkData.size
+                            val allBookmarksSelected =
+                                state.bookmarkData.isNotEmpty() && state.selectedIds.size == state.bookmarkData.size
                             if (allBookmarksSelected) {
                                 IconButton(onClick = { viewModel.homeEvents(HomeEvents.DeselectAll) }) {
                                     Icon(
@@ -188,7 +193,8 @@ fun RootScreen(
                             }
                         },
                         actions = {
-                            val allCollectionsSelected = collectionState.collections.isNotEmpty() && collectionState.selectedIds.size == collectionState.collections.size
+                            val allCollectionsSelected =
+                                collectionState.collections.isNotEmpty() && collectionState.selectedIds.size == collectionState.collections.size
                             if (allCollectionsSelected) {
                                 IconButton(onClick = { collectionViewModel.onEvent(CollectionEvents.DeselectAll) }) {
                                     Icon(
@@ -227,7 +233,8 @@ fun RootScreen(
                             }
                         },
                         actions = {
-                            val allDetailSelected = collectionState.collectionBookmarks.isNotEmpty() && collectionState.detailSelectedIds.size == collectionState.collectionBookmarks.size
+                            val allDetailSelected =
+                                collectionState.collectionBookmarks.isNotEmpty() && collectionState.detailSelectedIds.size == collectionState.collectionBookmarks.size
                             if (allDetailSelected) {
                                 IconButton(onClick = { collectionViewModel.onEvent(CollectionEvents.DeselectAllDetail) }) {
                                     Icon(
@@ -247,8 +254,13 @@ fun RootScreen(
                             }
                             IconButton(
                                 onClick = {
-                                    val id = collectionState.selectedCollection?.id ?: return@IconButton
-                                    collectionViewModel.onEvent(CollectionEvents.RemoveSelectedFromCollection(id))
+                                    val id =
+                                        collectionState.selectedCollection?.id ?: return@IconButton
+                                    collectionViewModel.onEvent(
+                                        CollectionEvents.RemoveSelectedFromCollection(
+                                            id
+                                        )
+                                    )
                                 }
                             ) {
                                 Icon(
@@ -327,8 +339,10 @@ fun RootScreen(
                         }
                     )
                 } else {
-                    val showSortButton = currentTab == 0 || (currentTab == 1 && collectionState.selectedCollection != null)
-                    val showSearchButton = currentTab == 0 || (currentTab == 1 && collectionState.selectedCollection != null)
+                    val showSortButton =
+                        currentTab == 0 || (currentTab == 1 && collectionState.selectedCollection != null)
+                    val showSearchButton =
+                        currentTab == 0 || (currentTab == 1 && collectionState.selectedCollection != null)
                     LargeTopAppBar(
                         scrollBehavior = scrollBehavior,
                         title = { Text(if (currentTab == 0) "Savr Bookmarks" else bottomAppBarItems[currentTab].title) },
@@ -381,6 +395,7 @@ fun RootScreen(
                                 modifier = Modifier.size(26.dp)
                             )
                         }
+
                         1 -> if (collectionState.selectedCollection == null) {
                             FloatingActionButton(
                                 onClick = { collectionViewModel.onEvent(CollectionEvents.ShowCreateDialog) }

@@ -62,9 +62,7 @@ fun CollectionScreen(
             }
         } else {
             LazyVerticalStaggeredGrid(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 8.dp),
+                modifier = Modifier.fillMaxSize(),
                 columns = StaggeredGridCells.Adaptive(160.dp),
                 contentPadding = PaddingValues(8.dp),
                 verticalItemSpacing = 6.dp,
