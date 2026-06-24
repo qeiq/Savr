@@ -5,6 +5,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 
 @Composable
 fun AutoBackupInfoDialog(
@@ -21,13 +25,18 @@ fun AutoBackupInfoDialog(
         },
         text = {
             Text(
-                text = "Your bookmarks will be automatically saved whenever they change.\n\n" +
-                        "File location:\n" +
-                        "Downloads/Savr/savr_autobackup.json\n\n" +
-                        "This file is visible in your file manager and " +
-                        "persists even if you uninstall the app.\n\n" +
-                        "To restore your data later, go to Settings \u2192 Data \u2192 " +
-                        "Restore bookmarks and select the auto-backup file.",
+                text = buildAnnotatedString {
+                    append("Automatically backs up your bookmarks whenever they change.\n\n")
+                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
+                        append("Saved to:\n")
+                    }
+                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
+                        append("Downloads/Savr/savr_autobackup.json")
+                    }
+                    append("\n\n")
+                    append("The file stays even if you uninstall the app. ")
+                    append("Use Restore in Settings to load it later.")
+                },
                 style = MaterialTheme.typography.bodyMedium
             )
         },
