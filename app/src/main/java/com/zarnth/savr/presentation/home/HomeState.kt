@@ -1,7 +1,7 @@
 package com.zarnth.savr.presentation.home
 
 import com.zarnth.savr.domain.model.Bookmark
-import com.zarnth.savr.presentation.setting.SortOrder
+import com.zarnth.savr.domain.model.SortOrder
 
 data class HomeState(
     val isLoading: Boolean = false,

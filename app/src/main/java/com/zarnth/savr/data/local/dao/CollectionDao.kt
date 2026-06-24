@@ -60,4 +60,14 @@ interface CollectionDao {
         ORDER BY c.name
     """)
     fun getCollectionsForBookmark(bookmarkId: Long): Flow<List<CollectionEntity>>
+
+    @Query("SELECT * FROM collections ORDER BY createdAt DESC")
+    fun getAllCollectionsRaw(): Flow<List<CollectionEntity>>
+
+    @Query("""
+        SELECT b.url FROM bookmarks b
+        INNER JOIN bookmark_collection_cross_ref bcc ON b.id = bcc.bookmarkId
+        WHERE bcc.collectionId = :collectionId
+    """)
+    suspend fun getBookmarkUrlsForCollection(collectionId: Long): List<String>
 }

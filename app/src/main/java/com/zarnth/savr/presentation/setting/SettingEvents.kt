@@ -17,4 +17,7 @@ sealed class SettingEvents {
     object DismissExport : SettingEvents()
     data class ImportData(val json: String) : SettingEvents()
     object DismissImportResult : SettingEvents()
+    data class ToggleAutoBackup(val enabled: Boolean) : SettingEvents()
+    object ConfirmAutoBackupEnable : SettingEvents()
+    object DismissAutoBackupInfoDialog : SettingEvents()
 }

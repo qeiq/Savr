@@ -15,6 +15,7 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
         private const val KEY_TAP_ACTION = "tap_action"
         private const val KEY_DYNAMIC_COLOR = "dynamic_color"
         private const val KEY_VIEW_MODE = "view_mode"
+        private const val KEY_AUTO_BACKUP = "auto_backup"
     }
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -52,5 +53,13 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
 
     override fun setViewMode(mode: ViewMode) {
         prefs.edit { putInt(KEY_VIEW_MODE, mode.ordinal) }
+    }
+
+    override fun getAutoBackupEnabled(): Boolean {
+        return prefs.getBoolean(KEY_AUTO_BACKUP, false)
+    }
+
+    override fun setAutoBackupEnabled(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_AUTO_BACKUP, enabled) }
     }
 }

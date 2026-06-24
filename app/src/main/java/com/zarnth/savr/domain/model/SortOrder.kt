@@ -1,4 +1,4 @@
-package com.zarnth.savr.presentation.setting
+package com.zarnth.savr.domain.model
 
 enum class SortOrder {
     DATE_NEWEST,

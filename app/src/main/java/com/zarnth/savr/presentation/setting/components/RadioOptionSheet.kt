@@ -21,13 +21,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.zarnth.savr.presentation.setting.ViewMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ViewModeSheet(
-    current: ViewMode,
-    onSelect: (ViewMode) -> Unit,
+fun <T> RadioOptionSheet(
+    title: String,
+    options: List<Pair<String, T>>,
+    current: T,
+    onSelect: (T) -> Unit,
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(
@@ -35,42 +36,45 @@ fun ViewModeSheet(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Text(
-            text = "View mode",
+            text = title,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(start = 24.dp, top = 8.dp, bottom = 8.dp)
         )
         Column(Modifier.selectableGroup()) {
-            ViewModeOption("Grid", ViewMode.GRID, current, onSelect)
-            ViewModeOption("List", ViewMode.LIST, current, onSelect)
+            options.forEach { (label, value) ->
+                RadioOptionRow(
+                    label = label,
+                    selected = value == current,
+                    onClick = { onSelect(value) }
+                )
+            }
         }
         Spacer(Modifier.height(24.dp))
     }
 }
 
 @Composable
-private fun ViewModeOption(
+private fun RadioOptionRow(
     label: String,
-    mode: ViewMode,
-    current: ViewMode,
-    onSelect: (ViewMode) -> Unit
+    selected: Boolean,
+    onClick: () -> Unit
 ) {
-    val isSelected = mode == current
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
             .clip(MaterialTheme.shapes.extraLarge)
             .selectable(
-                selected = isSelected,
-                onClick = { onSelect(mode) },
+                selected = selected,
+                onClick = onClick,
                 role = Role.RadioButton
             )
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         RadioButton(
-            selected = isSelected,
+            selected = selected,
             onClick = null,
             colors = RadioButtonDefaults.colors(
                 selectedColor = MaterialTheme.colorScheme.primary,
@@ -80,7 +84,7 @@ private fun ViewModeOption(
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             modifier = Modifier.padding(start = 16.dp)
         )
     }

@@ -7,7 +7,7 @@ import com.zarnth.savr.domain.model.Bookmark
 import com.zarnth.savr.domain.model.Collection
 import com.zarnth.savr.domain.repository.BookmarkRepository
 import com.zarnth.savr.link_fetcher.LinkMetadataParser
-import com.zarnth.savr.presentation.setting.SortOrder
+import com.zarnth.savr.domain.model.SortOrder
 import com.zarnth.savr.utils.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

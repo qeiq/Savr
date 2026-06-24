@@ -27,4 +27,7 @@ interface BookmarkDao {
 
     @Query("UPDATE bookmarks SET isHidden = 1 WHERE id IN (:ids)")
     suspend fun hideBookmarks(ids: List<Long>)
+
+    @Query("SELECT * FROM bookmarks")
+    fun getAllBookmarks(): Flow<List<BookmarkEntity>>
 }

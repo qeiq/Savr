@@ -2,7 +2,7 @@ package com.zarnth.savr.presentation.collection
 
 import com.zarnth.savr.domain.model.Bookmark
 import com.zarnth.savr.domain.model.Collection
-import com.zarnth.savr.presentation.setting.SortOrder
+import com.zarnth.savr.domain.model.SortOrder
 
 sealed class CollectionEvents {
     data class InputNameChanged(val name: String) : CollectionEvents()
