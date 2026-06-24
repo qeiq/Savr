@@ -18,7 +18,7 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
     private val _state = MutableStateFlow(HomeState())
     val state = _state.asStateFlow()
 
-    val parser = LinkMetadataParser()
+    private val parser = LinkMetadataParser()
     private var rawBookmarks: List<Bookmark> = emptyList()
 
     init {
@@ -156,27 +156,6 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
 
             HomeEvents.HideSortSheet -> {
                 _state.update { it.copy(showSortSheet = false) }
-            }
-        }
-    }
-
-    fun searchBookmarks(searchQuery: String) {
-        viewModelScope.launch {
-            repository.searchBookmarks(searchQuery).collect { search ->
-                when (search) {
-                    is Resource.Error<*> -> {
-                        Log.d("Search VM", "Error ${search.errorMessage}")
-                    }
-
-                    is Resource.Loading<*> -> {
-                        Log.d("Search VM", "Loading...")
-                    }
-
-                    is Resource.Success<*> -> {
-                        Log.d("Search VM", "Result ${search.data}")
-
-                    }
-                }
             }
         }
     }
