@@ -29,6 +29,9 @@ data class SettingState(
     val isDynamicColorSupported: Boolean = false,
     val viewMode: ViewMode = ViewMode.GRID,
     val showViewModeSheet: Boolean = false,
+    val autoBackupEnabled: Boolean = false,
+    val lastBackupTimeText: String = "",
+    val showAutoBackupInfoDialog: Boolean = false,
     val exportState: ExportState = ExportState.Idle,
     val importState: ImportState = ImportState.Idle
 )

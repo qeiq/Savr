@@ -53,8 +53,8 @@ import com.zarnth.savr.presentation.home.HomeViewModel
 import com.zarnth.savr.presentation.search.SearchViewModel
 import com.zarnth.savr.presentation.setting.SettingScreen
 import com.zarnth.savr.presentation.setting.SettingViewModel
-import com.zarnth.savr.presentation.setting.SortOrder
-import com.zarnth.savr.presentation.setting.components.SortSheet
+import com.zarnth.savr.domain.model.SortOrder
+import com.zarnth.savr.presentation.setting.components.RadioOptionSheet
 import com.zarnth.savr.ui.theme.SavrTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -464,7 +464,14 @@ fun RootScreen(
         }
 
         if (state.showSortSheet) {
-            SortSheet(
+            RadioOptionSheet(
+                title = "Sort by",
+                options = listOf(
+                    "Date added (newest first)" to SortOrder.DATE_NEWEST,
+                    "Date added (oldest first)" to SortOrder.DATE_OLDEST,
+                    "Title (A-Z)" to SortOrder.TITLE_ASC,
+                    "Title (Z-A)" to SortOrder.TITLE_DESC
+                ),
                 current = state.sortOrder,
                 onSelect = { viewModel.homeEvents(HomeEvents.SetSortOrder(it)) },
                 onDismiss = { viewModel.homeEvents(HomeEvents.HideSortSheet) }
@@ -472,7 +479,14 @@ fun RootScreen(
         }
 
         if (collectionState.showSortSheet) {
-            SortSheet(
+            RadioOptionSheet(
+                title = "Sort by",
+                options = listOf(
+                    "Date added (newest first)" to SortOrder.DATE_NEWEST,
+                    "Date added (oldest first)" to SortOrder.DATE_OLDEST,
+                    "Title (A-Z)" to SortOrder.TITLE_ASC,
+                    "Title (Z-A)" to SortOrder.TITLE_DESC
+                ),
                 current = collectionState.sortOrder,
                 onSelect = { collectionViewModel.onEvent(CollectionEvents.SetSortOrder(it)) },
                 onDismiss = { collectionViewModel.onEvent(CollectionEvents.HideSortSheet) }

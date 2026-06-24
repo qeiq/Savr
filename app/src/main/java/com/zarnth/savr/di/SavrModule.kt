@@ -1,6 +1,7 @@
 package com.zarnth.savr.di
 
 import androidx.room.Room
+import com.zarnth.savr.data.backup.BackupManager
 import com.zarnth.savr.data.local.BookmarkDatabase
 import com.zarnth.savr.data.local.repository.BookmarkRepositoryImpl
 import com.zarnth.savr.data.local.repository.SettingsRepositoryImpl
@@ -42,6 +43,10 @@ val savrModule = module {
         BookmarkRepositoryImpl(get(), get())
     }
 
+    single {
+        BackupManager(get(), get(), get(), get())
+    }
+
     viewModel {
         HomeViewModel(get())
     }
@@ -57,5 +62,4 @@ val savrModule = module {
     viewModel {
         SettingViewModel(get(), get())
     }
-
 }

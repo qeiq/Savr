@@ -13,4 +13,6 @@ interface SettingsRepository {
     fun setDynamicColor(enabled: Boolean)
     fun getViewMode(): ViewMode
     fun setViewMode(mode: ViewMode)
+    fun getAutoBackupEnabled(): Boolean
+    fun setAutoBackupEnabled(enabled: Boolean)
 }
