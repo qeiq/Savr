@@ -19,10 +19,15 @@ class BookmarkRepositoryImpl(
     private val collectionDao: CollectionDao
 ) : BookmarkRepository {
 
-    override suspend fun insert(bookmark: Bookmark) {
-        if (!dao.existsByUrl(bookmark.url)) {
+    override suspend fun insert(bookmark: Bookmark): Boolean {
+        if (dao.existsByUrl(bookmark.url)) return false
+        val hidden = dao.findHiddenByUrl(bookmark.url)
+        if (hidden != null) {
+            dao.unhideBookmark(hidden.id, bookmark.title, bookmark.description, bookmark.imageUrl)
+        } else {
             dao.insert(bookmark.toEntity())
         }
+        return true
     }
 
     override suspend fun deleteBookmarks(bookmarks: List<Bookmark>) {

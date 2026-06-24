@@ -201,8 +201,14 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
                     description = meta?.description,
                     imageUrl = meta?.imageUrl
                 )
-                repository.insert(bookmark)
-                _state.update { it.copy(isLoading = false, inputUrl = "") }
+                val inserted = repository.insert(bookmark)
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        inputUrl = if (inserted) "" else it.inputUrl,
+                        duplicateToastKey = if (inserted) it.duplicateToastKey else it.duplicateToastKey + 1
+                    )
+                }
 
             } catch (e: Exception) {
                 _state.update {

@@ -38,9 +38,9 @@ fun SearchResults(
     selectedIds: Set<Long>,
     isSelectionMode: Boolean,
     isLoading: Boolean,
-    onBodyClick: (Bookmark) -> Unit,
-    onPhotoClick: (String) -> Unit,
-    onLongClick: (Long) -> Unit,
+    onBodyClick: ((Bookmark) -> Unit)? = null,
+    onPhotoClick: ((String) -> Unit)? = null,
+    onLongClick: ((Long) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val gridState = rememberLazyStaggeredGridState()
@@ -103,9 +103,9 @@ fun SearchResults(
                         imageUrl = item.imageUrl,
                         title = item.title,
                         description = item.description,
-                        photoClickUrl = { onPhotoClick(it) },
-                        bodyClick = { onBodyClick(item) },
-                        onLongClick = { onLongClick(item.id) },
+                        photoClickUrl = { onPhotoClick?.invoke(it) },
+                        bodyClick = { onBodyClick?.invoke(item) },
+                        onLongClick = { onLongClick?.invoke(item.id) },
                         isSelected = item.id in selectedIds,
                         isSelectionMode = isSelectionMode,
                         url = item.url
@@ -128,9 +128,9 @@ fun SearchResults(
                         imageUrl = item.imageUrl,
                         title = item.title,
                         description = item.description,
-                        photoClickUrl = { onPhotoClick(it) },
-                        bodyClick = { onBodyClick(item) },
-                        onLongClick = { onLongClick(item.id) },
+                        photoClickUrl = { onPhotoClick?.invoke(it) },
+                        bodyClick = { onBodyClick?.invoke(item) },
+                        onLongClick = { onLongClick?.invoke(item.id) },
                         isSelected = item.id in selectedIds,
                         isSelectionMode = isSelectionMode,
                         url = item.url

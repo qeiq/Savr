@@ -71,8 +71,9 @@ fun RootScreen(
     ) {
         if (!isCollectionSearching) null
         else if (collectionSearchQuery.isBlank()) collectionState.collectionBookmarks
-        else collectionState.collectionBookmarks.filter {
-            it.title?.contains(collectionSearchQuery, ignoreCase = true) ?: false
+        else collectionState.collectionBookmarks.filter { bm ->
+            (bm.title?.contains(collectionSearchQuery, ignoreCase = true) ?: false) ||
+            bm.url.contains(collectionSearchQuery, ignoreCase = true)
         }
     }
 

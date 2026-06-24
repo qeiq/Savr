@@ -69,7 +69,7 @@ class BackupManager(
                 bookmarkDao.getBookmarks(),
                 collectionDao.getAllCollections()
             ) { bookmarks, collections ->
-                val backupBookmarks = bookmarks.map { BackupBookmark(url = it.url, title = it.title, description = it.description, imageUrl = it.imageUrl) }
+                val backupBookmarks = bookmarks.map { BackupBookmark(url = it.url, title = it.title, description = it.description, imageUrl = it.imageUrl, createdAt = it.createdAt) }
                 val backupCollections = collections.mapNotNull { collection ->
                     val urls = collectionDao.getBookmarkUrlsForCollection(collection.id)
                     if (collection.name.isNotBlank()) BackupCollection(name = collection.name, bookmarkUrls = urls) else null
@@ -132,7 +132,7 @@ class BackupManager(
         val bookmarks = bookmarkDao.getBookmarks().first()
         val collections = collectionDao.getAllCollections().first()
 
-        val backupBookmarks = bookmarks.map { BackupBookmark(url = it.url, title = it.title, description = it.description, imageUrl = it.imageUrl) }
+        val backupBookmarks = bookmarks.map { BackupBookmark(url = it.url, title = it.title, description = it.description, imageUrl = it.imageUrl, createdAt = it.createdAt) }
         val backupCollections = collections.mapNotNull { collection ->
             val urls = collectionDao.getBookmarkUrlsForCollection(collection.id)
             if (collection.name.isNotBlank()) BackupCollection(name = collection.name, bookmarkUrls = urls) else null
@@ -149,7 +149,7 @@ class BackupManager(
 
         for (b in backupData.bookmarks) {
             if (b.url !in existingUrls) {
-                bookmarkDao.insert(BookmarkEntity(url = b.url, title = b.title, description = b.description, imageUrl = b.imageUrl))
+                bookmarkDao.insert(BookmarkEntity(url = b.url, title = b.title, description = b.description, imageUrl = b.imageUrl, createdAt = b.createdAt))
             }
         }
 

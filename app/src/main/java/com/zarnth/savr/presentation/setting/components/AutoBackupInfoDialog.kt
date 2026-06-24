@@ -26,16 +26,15 @@ fun AutoBackupInfoDialog(
         text = {
             Text(
                 text = buildAnnotatedString {
-                    append("Automatically backs up your bookmarks whenever they change.\n\n")
                     withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                        append("Saved to:\n")
+                        append("Auto backup mirrors your current bookmarks.\n\n")
                     }
+                    append("If you delete bookmarks in the app, they are also removed from the auto-backup.\n\n")
+                    append("Use ")
                     withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                        append("Downloads/Savr/savr_autobackup.json")
+                        append("Backup Bookmarks")
                     }
-                    append("\n\n")
-                    append("The file stays even if you uninstall the app. ")
-                    append("Use Restore in Settings to load it later.")
+                    append(" in Settings, Data section to save a permanent copy before deleting anything.")
                 },
                 style = MaterialTheme.typography.bodyMedium
             )

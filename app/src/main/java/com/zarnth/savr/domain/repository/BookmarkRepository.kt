@@ -6,7 +6,7 @@ import com.zarnth.savr.utils.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface BookmarkRepository {
-    suspend fun insert(bookmark: Bookmark)
+    suspend fun insert(bookmark: Bookmark): Boolean
     fun getBookmarks(): Flow<Resource<List<Bookmark>>>
     suspend fun deleteBookmarks(bookmarks: List<Bookmark>)
     suspend fun hideBookmarks(ids: List<Long>)

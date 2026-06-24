@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import android.widget.Toast
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -76,6 +77,12 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(state.duplicateToastKey) {
+        if (state.duplicateToastKey > 0) {
+            Toast.makeText(context, "URL already exists", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     BackHandler(enabled = state.isSelectionMode) {
         viewModel.homeEvents(HomeEvents.ClearSelection)
     }
@@ -89,8 +96,7 @@ fun HomeScreen(
             isSelectionMode = state.isSelectionMode,
             isLoading = state.isLoading,
             onBodyClick = { item -> handleTap(item, tapAction, context, clipboard, viewModel) },
-            onPhotoClick = { viewModel.homeEvents(HomeEvents.PreviewImageClick(url = it)) },
-            onLongClick = { viewModel.homeEvents(HomeEvents.ToggleSelection(it)) }
+            onPhotoClick = { viewModel.homeEvents(HomeEvents.PreviewImageClick(url = it)) }
         )
     } else {
         Box(

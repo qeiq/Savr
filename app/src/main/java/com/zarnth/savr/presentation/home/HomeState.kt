@@ -18,5 +18,6 @@ data class HomeState(
     val showCollectionPicker: Boolean = false,
     val collections: List<com.zarnth.savr.domain.model.Collection> = emptyList(),
     val sortOrder: SortOrder = SortOrder.DATE_NEWEST,
-    val showSortSheet: Boolean = false
+    val showSortSheet: Boolean = false,
+    val duplicateToastKey: Int = 0
 )

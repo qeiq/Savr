@@ -7,7 +7,8 @@ data class BackupBookmark(
     val url: String,
     val title: String? = null,
     val description: String? = null,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val createdAt: Long = System.currentTimeMillis()
 )
 
 @Serializable

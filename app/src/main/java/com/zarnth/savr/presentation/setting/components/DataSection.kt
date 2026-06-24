@@ -62,11 +62,11 @@ fun DataSection(
     SettingItem(
         icon = R.drawable.backup_icon,
         title = "Auto backup",
-        subtitle = when {
-            state.autoBackupEnabled && state.lastBackupTimeText.isNotEmpty() -> state.lastBackupTimeText
-            state.autoBackupEnabled -> "No backup yet"
-            else -> "Off"
-        },
+        subtitle = if (state.autoBackupEnabled) {
+            val time = state.lastBackupTimeText
+            if (time.isNotEmpty()) "$time\n/storage/Download/Savr/savr_autobackup.json"
+            else "No backup yet\n/storage/Download/Savr/savr_autobackup.json"
+        } else "Off",
         trailing = {
             Switch(
                 checked = state.autoBackupEnabled,
