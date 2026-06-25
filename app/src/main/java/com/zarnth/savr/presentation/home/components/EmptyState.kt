@@ -17,7 +17,7 @@ fun EmptyBookmarkState() {
         Text(text = "┑(￣Д ￣)┍", fontSize = 36.sp)
         Spacer(Modifier.height(12.dp))
         Text(
-            text = "No bookmarks yet",
+            text = "Please click + to add a bookmark",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

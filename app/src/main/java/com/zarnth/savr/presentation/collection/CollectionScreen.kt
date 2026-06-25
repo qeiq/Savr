@@ -54,7 +54,7 @@ fun CollectionScreen(
                     )
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = "No collections yet",
+                        text = "Please click + to add a bookmark",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
