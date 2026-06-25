@@ -20,4 +20,6 @@ sealed class SettingEvents {
     data class ToggleAutoBackup(val enabled: Boolean) : SettingEvents()
     object ConfirmAutoBackupEnable : SettingEvents()
     object DismissAutoBackupInfoDialog : SettingEvents()
+    data class ImportBrowserBookmarks(val html: String) : SettingEvents()
+    object DismissBrowserImportResult : SettingEvents()
 }

@@ -20,18 +20,11 @@ class BookmarkRepositoryImpl(
 ) : BookmarkRepository {
 
     override suspend fun insert(bookmark: Bookmark): Boolean {
-        if (dao.existsByUrl(bookmark.url)) return false
-        val hidden = dao.findHiddenByUrl(bookmark.url)
-        if (hidden != null) {
-            dao.unhideBookmark(hidden.id, bookmark.title, bookmark.description, bookmark.imageUrl)
-        } else {
-            dao.insert(bookmark.toEntity())
-        }
-        return true
+        return dao.insertOrUnhide(bookmark.toEntity())
     }
 
-    override suspend fun deleteBookmarks(bookmarks: List<Bookmark>) {
-        dao.delete(bookmarks.map { it.toEntity() })
+    override suspend fun getBookmarksWithoutImage(): List<Bookmark> {
+        return dao.getBookmarksWithoutImageOnce().map { it.toDomain() }
     }
 
     override suspend fun hideBookmarks(ids: List<Long>) {
@@ -82,13 +75,15 @@ class BookmarkRepositoryImpl(
         collectionDao.addBookmarkToCollection(BookmarkCollectionCrossRef(bookmarkId, collectionId))
     }
 
+    override suspend fun addBookmarksToCollection(bookmarkIds: List<Long>, collectionId: Long) {
+        collectionDao.addBookmarksToCollection(bookmarkIds.map { BookmarkCollectionCrossRef(it, collectionId) })
+    }
+
     override suspend fun removeBookmarkFromCollection(bookmarkId: Long, collectionId: Long) {
         collectionDao.removeBookmarkFromCollection(BookmarkCollectionCrossRef(bookmarkId, collectionId))
     }
 
-    override fun getCollectionsForBookmark(bookmarkId: Long): Flow<List<Collection>> {
-        return collectionDao.getCollectionsForBookmark(bookmarkId).map { list ->
-            list.map { it.toDomain() }
-        }
+    override suspend fun updateImageUrl(id: Long, imageUrl: String?) {
+        dao.updateImageUrl(id, imageUrl)
     }
 }

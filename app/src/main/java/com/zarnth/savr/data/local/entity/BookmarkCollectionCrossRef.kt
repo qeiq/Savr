@@ -2,6 +2,7 @@ package com.zarnth.savr.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 
 @Entity(
     tableName = "bookmark_collection_cross_ref",
@@ -19,7 +20,8 @@ import androidx.room.ForeignKey
             childColumns = ["collectionId"],
             onDelete = ForeignKey.CASCADE
         )
-    ]
+    ],
+    indices = [Index("bookmarkId"), Index("collectionId")]
 )
 data class BookmarkCollectionCrossRef(
     val bookmarkId: Long,

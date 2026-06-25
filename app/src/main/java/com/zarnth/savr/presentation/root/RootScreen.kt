@@ -215,6 +215,7 @@ fun RootScreen(
                     currentTab = currentTab,
                     homeState = state,
                     collectionState = collectionState,
+                    isSearching = isSearching,
                     onHomeFabClick = { viewModel.homeEvents(HomeEvents.FabClick) },
                     onCollectionFabClick = { collectionViewModel.onEvent(CollectionEvents.ShowCreateDialog) }
                 )

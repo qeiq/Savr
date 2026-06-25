@@ -54,7 +54,7 @@ fun CollectionScreen(
                     )
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = "Please click + to add a bookmark",
+                        text = "Please click + to create a collection",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

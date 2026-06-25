@@ -22,7 +22,7 @@ val savrModule = module {
                 get(),
                 BookmarkDatabase::class.java,
                 "bookmark_db"
-            ).fallbackToDestructiveMigration(false)
+            )            .fallbackToDestructiveMigration(true)
             .build()
     }
 

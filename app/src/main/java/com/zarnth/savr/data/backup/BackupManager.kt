@@ -1,5 +1,6 @@
 package com.zarnth.savr.data.backup
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.os.Build
@@ -102,6 +103,7 @@ class BackupManager(
         _lastBackupTimeMillis.value = System.currentTimeMillis()
     }
 
+    @SuppressLint("NewApi")
     private fun writeToDownloads(jsonString: String) {
         val collectionUri = MediaStore.Downloads.EXTERNAL_CONTENT_URI
         val selection = "${MediaStore.Downloads.DISPLAY_NAME} = ?"
@@ -129,8 +131,8 @@ class BackupManager(
     }
 
     suspend fun generateBackupJson(): String {
-        val bookmarks = bookmarkDao.getBookmarks().first()
-        val collections = collectionDao.getAllCollections().first()
+        val bookmarks = bookmarkDao.getBookmarksOnce()
+        val collections = collectionDao.getAllCollectionsRaw().first()
 
         val backupBookmarks = bookmarks.map { BackupBookmark(url = it.url, title = it.title, description = it.description, imageUrl = it.imageUrl, createdAt = it.createdAt) }
         val backupCollections = collections.mapNotNull { collection ->
@@ -142,18 +144,54 @@ class BackupManager(
         return json.encodeToString(data)
     }
 
-    suspend fun importFromJson(jsonString: String) {
-        val backupData = json.decodeFromString<BackupData>(jsonString)
+    suspend fun importFromBrowserBookmarks(html: String): BrowserImportResult {
+        val parser = BookmarkParser()
+        val (parsedBookmarks, collectionNames) = parser.parse(html)
 
-        val existingUrls = bookmarkDao.getBookmarks().first().map { it.url }.toSet()
+        val existingUrls = bookmarkDao.getBookmarksOnce().map { it.url }.toSet()
+        var imported = 0
+        var skipped = 0
 
-        for (b in backupData.bookmarks) {
-            if (b.url !in existingUrls) {
-                bookmarkDao.insert(BookmarkEntity(url = b.url, title = b.title, description = b.description, imageUrl = b.imageUrl, createdAt = b.createdAt))
+        for (pb in parsedBookmarks) {
+            if (pb.url in existingUrls) {
+                skipped++
+                continue
+            }
+            bookmarkDao.insertWithReturn(BookmarkEntity(url = pb.url, title = pb.title, description = null, imageUrl = null))
+            imported++
+        }
+
+        val existingCollections = collectionDao.getAllCollectionsRaw().first().associateBy { it.name }
+        val nameToId = existingCollections.mapValues { it.value.id }.toMutableMap()
+
+        val bookmarkMap = bookmarkDao.getBookmarksOnce().associateBy { it.url }
+
+        for (name in collectionNames) {
+            val id = nameToId.getOrPut(name) {
+                collectionDao.insertCollection(CollectionEntity(name = name))
+            }
+            parsedBookmarks.filter { it.collection == name }.forEach { pb ->
+                bookmarkMap[pb.url]?.let { bm ->
+                    collectionDao.addBookmarkToCollection(BookmarkCollectionCrossRef(bm.id, id))
+                }
             }
         }
 
-        val bookmarkMap = bookmarkDao.getBookmarks().first().associateBy { it.url }
+        return BrowserImportResult(imported = imported, skipped = skipped, collections = collectionNames.size)
+    }
+
+    suspend fun importFromJson(jsonString: String) {
+        val backupData = json.decodeFromString<BackupData>(jsonString)
+
+        val existingUrls = bookmarkDao.getBookmarksOnce().map { it.url }.toSet()
+
+        for (b in backupData.bookmarks) {
+            if (b.url !in existingUrls) {
+                bookmarkDao.insertWithReturn(BookmarkEntity(url = b.url, title = b.title, description = b.description, imageUrl = b.imageUrl, createdAt = b.createdAt))
+            }
+        }
+
+        val bookmarkMap = bookmarkDao.getBookmarksOnce().associateBy { it.url }
 
         val existingCollections = collectionDao.getAllCollectionsRaw().first().associateBy { it.name }
         val collectionNameToId = existingCollections.mapValues { it.value.id }.toMutableMap()

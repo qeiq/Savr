@@ -19,10 +19,11 @@ fun RootFab(
     currentTab: Int,
     homeState: HomeState,
     collectionState: CollectionState,
+    isSearching: Boolean = false,
     onHomeFabClick: () -> Unit,
     onCollectionFabClick: () -> Unit
 ) {
-    if (homeState.isSelectionMode || collectionState.isSelectionMode ||
+    if (isSearching || homeState.isSelectionMode || collectionState.isSelectionMode ||
         collectionState.isDetailSelectionMode
     ) return
 

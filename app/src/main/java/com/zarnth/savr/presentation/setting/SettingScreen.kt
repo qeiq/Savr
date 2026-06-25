@@ -69,6 +69,17 @@ fun SettingScreen(
         }
     }
 
+    val importBrowserLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val uri = result.data?.data
+        if (uri != null) {
+            val html =
+                context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText() ?: ""
+            if (html.isNotBlank()) viewModel.onEvent(SettingEvents.ImportBrowserBookmarks(html))
+        }
+    }
+
     LaunchedEffect(state.exportState) {
         if (state.exportState is ExportState.Ready) {
             exportLauncher.launch("savr_backup.json")
@@ -83,13 +94,13 @@ fun SettingScreen(
         ) {
             ThemeSection(state, viewModel)
             GeneralSection(state, viewModel)
-            DataSection(state, viewModel, importLauncher)
+            DataSection(state, viewModel, importLauncher, importBrowserLauncher)
             CommunitySection(context)
             AboutSection(versionName)
         }
 
         LoadingProgress(
-            isLoading = state.exportState is ExportState.Loading || state.importState is ImportState.Loading
+            isLoading = state.exportState is ExportState.Loading || state.importState is ImportState.Loading || state.browserImportState is BrowserImportState.Loading
         )
     }
 
@@ -157,6 +168,24 @@ fun SettingScreen(
             title = "Import failed",
             text = importError.message ?: "Import failed",
             onDismiss = { viewModel.onEvent(SettingEvents.DismissImportResult) }
+        )
+    }
+
+    val browserImportSuccess = state.browserImportState as? BrowserImportState.Success
+    if (browserImportSuccess != null) {
+        InfoDialog(
+            title = "Browser import complete",
+            text = "Imported ${browserImportSuccess.imported} bookmarks into ${browserImportSuccess.collections} folders (${browserImportSuccess.skipped} duplicates skipped).",
+            onDismiss = { viewModel.onEvent(SettingEvents.DismissBrowserImportResult) }
+        )
+    }
+
+    val browserImportError = state.browserImportState as? BrowserImportState.Error
+    if (browserImportError != null) {
+        InfoDialog(
+            title = "Browser import failed",
+            text = browserImportError.message,
+            onDismiss = { viewModel.onEvent(SettingEvents.DismissBrowserImportResult) }
         )
     }
 

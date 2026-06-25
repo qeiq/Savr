@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.zarnth.savr.data.local.entity.BookmarkCollectionCrossRef
 import com.zarnth.savr.data.local.entity.CollectionEntity
 import com.zarnth.savr.data.local.entity.CollectionWithBookmarks
@@ -41,25 +42,18 @@ interface CollectionDao {
     """)
     fun getAllCollections(): Flow<List<CollectionWithCount>>
 
+    @Transaction
     @Query("SELECT * FROM collections WHERE id = :collectionId")
     fun getCollectionWithBookmarks(collectionId: Long): Flow<CollectionWithBookmarks?>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun addBookmarkToCollection(crossRef: BookmarkCollectionCrossRef)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun addBookmarksToCollection(crossRefs: List<BookmarkCollectionCrossRef>)
+
     @Delete
     suspend fun removeBookmarkFromCollection(crossRef: BookmarkCollectionCrossRef)
-
-    @Query("SELECT COUNT(*) FROM bookmark_collection_cross_ref WHERE collectionId = :collectionId")
-    fun getBookmarkCount(collectionId: Long): Flow<Int>
-
-    @Query("""
-        SELECT c.* FROM collections c
-        INNER JOIN bookmark_collection_cross_ref bcc ON c.id = bcc.collectionId
-        WHERE bcc.bookmarkId = :bookmarkId
-        ORDER BY c.name
-    """)
-    fun getCollectionsForBookmark(bookmarkId: Long): Flow<List<CollectionEntity>>
 
     @Query("SELECT * FROM collections ORDER BY createdAt DESC")
     fun getAllCollectionsRaw(): Flow<List<CollectionEntity>>

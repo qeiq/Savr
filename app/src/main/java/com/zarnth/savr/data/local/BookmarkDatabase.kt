@@ -10,7 +10,7 @@ import com.zarnth.savr.data.local.entity.CollectionEntity
 
 @Database(
     entities = [BookmarkEntity::class, CollectionEntity::class, BookmarkCollectionCrossRef::class],
-    version = 3
+    version = 4
 )
 abstract class BookmarkDatabase : RoomDatabase() {
 

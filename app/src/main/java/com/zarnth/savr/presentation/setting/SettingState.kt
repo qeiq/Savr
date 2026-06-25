@@ -20,6 +20,13 @@ sealed class ImportState {
     data class Error(val message: String) : ImportState()
 }
 
+sealed class BrowserImportState {
+    object Idle : BrowserImportState()
+    object Loading : BrowserImportState()
+    data class Success(val imported: Int, val skipped: Int, val collections: Int) : BrowserImportState()
+    data class Error(val message: String) : BrowserImportState()
+}
+
 data class SettingState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val showThemeSheet: Boolean = false,
@@ -33,5 +40,6 @@ data class SettingState(
     val lastBackupTimeText: String = "",
     val showAutoBackupInfoDialog: Boolean = false,
     val exportState: ExportState = ExportState.Idle,
-    val importState: ImportState = ImportState.Idle
+    val importState: ImportState = ImportState.Idle,
+    val browserImportState: BrowserImportState = BrowserImportState.Idle
 )

@@ -141,6 +141,14 @@ class SettingViewModel(
             SettingEvents.DismissAutoBackupInfoDialog -> {
                 _state.update { it.copy(showAutoBackupInfoDialog = false) }
             }
+
+            is SettingEvents.ImportBrowserBookmarks -> {
+                importBrowserBookmarks(event.html)
+            }
+
+            SettingEvents.DismissBrowserImportResult -> {
+                _state.update { it.copy(browserImportState = BrowserImportState.Idle) }
+            }
         }
     }
 
@@ -164,6 +172,18 @@ class SettingViewModel(
                 _state.update { it.copy(importState = ImportState.Success) }
             } catch (e: Exception) {
                 _state.update { it.copy(importState = ImportState.Error(e.message ?: "Import failed")) }
+            }
+        }
+    }
+
+    private fun importBrowserBookmarks(html: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(browserImportState = BrowserImportState.Loading) }
+            try {
+                val result = backupManager.importFromBrowserBookmarks(html)
+                _state.update { it.copy(browserImportState = BrowserImportState.Success(result.imported, result.skipped, result.collections)) }
+            } catch (e: Exception) {
+                _state.update { it.copy(browserImportState = BrowserImportState.Error(e.message ?: "Import failed")) }
             }
         }
     }

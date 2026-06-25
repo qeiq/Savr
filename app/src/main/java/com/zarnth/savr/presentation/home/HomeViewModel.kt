@@ -9,6 +9,7 @@ import com.zarnth.savr.domain.repository.BookmarkRepository
 import com.zarnth.savr.link_fetcher.LinkMetadataParser
 import com.zarnth.savr.domain.model.SortOrder
 import com.zarnth.savr.utils.Resource
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -20,10 +21,12 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
 
     private val parser = LinkMetadataParser()
     private var rawBookmarks: List<Bookmark> = emptyList()
+    private var isFetchingMetadata = false
 
     init {
         loadBookmarks()
         loadCollections()
+        fetchMissingMetadataOnStart()
     }
 
     fun homeEvents(events: HomeEvents) {
@@ -230,11 +233,10 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
     }
 
     private fun addSelectedToCollection(collectionId: Long) {
-        val ids = _state.value.selectedIds
+        val ids = _state.value.selectedIds.toList()
+        if (ids.isEmpty()) return
         viewModelScope.launch {
-            ids.forEach { id ->
-                repository.addBookmarkToCollection(id, collectionId)
-            }
+            repository.addBookmarksToCollection(ids, collectionId)
             _state.update {
                 it.copy(
                     showCollectionPicker = false,
@@ -272,10 +274,28 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
                                 bookmarkData = sortBookmarks(items, sortOrder)
                             )
                         }
-                        Log.d("BRO", "Madafaka why isnt it Parsed? : ${data.data}")
                     }
                 }
             }
+        }
+    }
+
+    private fun fetchMissingMetadataOnStart() {
+        viewModelScope.launch {
+            val missing = repository.getBookmarksWithoutImage()
+            if (missing.isEmpty() || isFetchingMetadata) return@launch
+            isFetchingMetadata = true
+            missing.map { bm ->
+                async {
+                    try {
+                        val meta = parser.parse(bm.url)
+                        if (!meta?.imageUrl.isNullOrBlank()) {
+                            repository.updateImageUrl(bm.id, meta.imageUrl)
+                        }
+                    } catch (_: Exception) { }
+                }
+            }.forEach { it.await() }
+            isFetchingMetadata = false
         }
     }
 

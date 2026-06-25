@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zarnth.savr.R
+import com.zarnth.savr.presentation.setting.BrowserImportState
 import com.zarnth.savr.presentation.setting.ExportState
 import com.zarnth.savr.presentation.setting.ImportState
 import com.zarnth.savr.presentation.setting.SettingEvents
@@ -23,7 +24,8 @@ import com.zarnth.savr.presentation.setting.SettingViewModel
 fun DataSection(
     state: SettingState,
     viewModel: SettingViewModel,
-    importLauncher: ActivityResultLauncher<Intent>
+    importLauncher: ActivityResultLauncher<Intent>,
+    importBrowserLauncher: ActivityResultLauncher<Intent>
 ) {
     Spacer(Modifier.height(12.dp))
     SectionHeader("Data")
@@ -55,6 +57,22 @@ fun DataSection(
                     }
                 }
                 importLauncher.launch(intent)
+            }
+        }
+    )
+    Spacer(Modifier.height(4.dp))
+    SettingItem(
+        icon = R.drawable.browser_icon,
+        title = "Import from browser",
+        subtitle = if (state.browserImportState is BrowserImportState.Loading) "Importing..." else "Pick the .html file exported from browser",
+        onClick = {
+            if (state.browserImportState !is BrowserImportState.Loading) {
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "text/html"
+                    putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("text/html", "text/plain"))
+                }
+                importBrowserLauncher.launch(intent)
             }
         }
     )
