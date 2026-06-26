@@ -66,6 +66,10 @@ Every bookmark app I tried was either crammed with stuff I'd never use or wanted
 
 Metadata parsing powered by [Android-Link-Preview](https://github.com/vishalkumarsinghvi/Android-Link-Preview) by Vishal Kumar Singhvi.
 
+## License
+
+This project is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for details.
+
 ## Found a bug? Got an idea?
 
 [Open an issue](https://github.com/qeiq/Savr/issues). Or just say hi — I don't bite.
