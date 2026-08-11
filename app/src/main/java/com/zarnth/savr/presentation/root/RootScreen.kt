@@ -3,13 +3,15 @@ package com.zarnth.savr.presentation.root
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -21,13 +23,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -46,18 +46,18 @@ import com.zarnth.savr.presentation.home.HomeScreen
 import com.zarnth.savr.presentation.home.HomeViewModel
 import com.zarnth.savr.presentation.home.components.ClipboardAddSheet
 import com.zarnth.savr.presentation.home.components.EditBookmarkSheet
+import com.zarnth.savr.presentation.home.components.LoadingProgress
 import com.zarnth.savr.presentation.root.components.DefaultTopBar
 import com.zarnth.savr.presentation.root.components.RootBottomBar
 import com.zarnth.savr.presentation.root.components.RootFab
 import com.zarnth.savr.presentation.root.components.SearchTopBar
 import com.zarnth.savr.presentation.root.components.SelectionTopBar
 import com.zarnth.savr.presentation.search.SearchViewModel
-import com.zarnth.savr.presentation.home.components.LoadingProgress
 import com.zarnth.savr.presentation.setting.BrowserImportState
 import com.zarnth.savr.presentation.setting.ImportState
+import com.zarnth.savr.presentation.setting.SettingEvents
 import com.zarnth.savr.presentation.setting.SettingScreen
 import com.zarnth.savr.presentation.setting.SettingViewModel
-import com.zarnth.savr.presentation.setting.SettingEvents
 import com.zarnth.savr.presentation.setting.UpdateState
 import com.zarnth.savr.presentation.setting.components.RadioOptionSheet
 import com.zarnth.savr.presentation.setting.components.UpdateSheet
@@ -108,6 +108,12 @@ fun RootScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val clipboardScope = rememberCoroutineScope()
+
+    LaunchedEffect(state.duplicateToastKey) {
+        if (state.duplicateToastKey > 0) {
+            Toast.makeText(context, "URL already exists", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     DisposableEffect(lifecycleOwner, clipboardManager) {
         fun checkClipboard() {

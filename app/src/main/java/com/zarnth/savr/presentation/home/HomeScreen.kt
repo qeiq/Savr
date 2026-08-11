@@ -1,5 +1,6 @@
 package com.zarnth.savr.presentation.home
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -77,11 +78,7 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(state.duplicateToastKey) {
-        if (state.duplicateToastKey > 0) {
-            Toast.makeText(context, "URL already exists", Toast.LENGTH_SHORT).show()
-        }
-    }
+
 
     BackHandler(enabled = state.isSelectionMode) {
         viewModel.homeEvents(HomeEvents.ClearSelection)
