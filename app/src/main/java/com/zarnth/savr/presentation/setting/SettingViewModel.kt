@@ -211,6 +211,7 @@ class SettingViewModel(
             _state.update { it.copy(importState = ImportState.Loading) }
             try {
                 backupManager.importFromJson(jsonString)
+                backupManager.fetchMissingImages()
                 _state.update { it.copy(importState = ImportState.Success) }
             } catch (e: Exception) {
                 _state.update { it.copy(importState = ImportState.Error(e.message ?: "Import failed")) }

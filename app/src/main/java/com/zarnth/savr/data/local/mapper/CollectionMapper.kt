@@ -7,7 +7,9 @@ import com.zarnth.savr.domain.model.Collection
 fun CollectionEntity.toDomain(): Collection {
     return Collection(
         id = id,
-        name = name
+        name = name,
+        parentCollectionId = parentCollectionId,
+        createdAt = createdAt
     )
 }
 
@@ -15,13 +17,17 @@ fun CollectionWithCount.toDomain(): Collection {
     return Collection(
         id = id,
         name = name,
-        bookmarkCount = bookmarkCount
+        bookmarkCount = bookmarkCount,
+        parentCollectionId = parentCollectionId,
+        createdAt = createdAt
     )
 }
 
 fun Collection.toEntity(): CollectionEntity {
     return CollectionEntity(
         id = id,
-        name = name
+        name = name,
+        parentCollectionId = parentCollectionId,
+        createdAt = createdAt
     )
 }

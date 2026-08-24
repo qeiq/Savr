@@ -14,9 +14,10 @@ fun AppNavHost(
     onTabChange: (Int) -> Unit,
     homeScreen: @Composable () -> Unit,
     collectionsScreen: @Composable (onNavigateToDetail: (Long) -> Unit) -> Unit,
-    collectionDetailScreen: @Composable (collectionId: Long) -> Unit,
+    collectionDetailScreen: @Composable (collectionId: Long, onNavigateToSubCollection: (Long) -> Unit) -> Unit,
     settingsScreen: @Composable (onNavigateToCrashLogs: () -> Unit) -> Unit,
     crashLogScreen: @Composable () -> Unit,
+    onRestoreCollection: (collectionId: Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val backStacks: List<MutableList<AppRoute>> = remember {
@@ -29,17 +30,22 @@ fun AppNavHost(
 
     val currentBackStack = backStacks[currentTab]
 
-    BackHandler(enabled = currentTab != 0 || currentBackStack.size > 1) {
-        when {
-            currentBackStack.size > 1 -> currentBackStack.removeLastOrNull()
-            currentTab != 0 -> onTabChange(0)
-        }
+    BackHandler(enabled = currentTab != 0 && currentBackStack.size <= 1) {
+        onTabChange(0)
     }
 
     NavDisplay(
         modifier = modifier,
         backStack = currentBackStack,
-        onBack = { currentBackStack.removeLastOrNull() },
+        onBack = {
+            currentBackStack.removeLastOrNull()
+            // Keep the section ViewModel in sync so the top bar always shows the
+            // collection that is now at the top of the back stack (deterministic,
+            // not reliant on Compose LaunchedEffect timing after a back-press).
+            (currentBackStack.lastOrNull() as? AppRoute.CollectionDetail)?.let {
+                onRestoreCollection(it.collectionId)
+            }
+        },
         entryProvider = { route ->
             when (route) {
                 is AppRoute.Home -> NavEntry(route) {
@@ -49,7 +55,9 @@ fun AppNavHost(
                     collectionsScreen { id -> currentBackStack.add(AppRoute.CollectionDetail(id)) }
                 }
                 is AppRoute.CollectionDetail -> NavEntry(route) {
-                    collectionDetailScreen(route.collectionId)
+                    collectionDetailScreen(route.collectionId) { id ->
+                        currentBackStack.add(AppRoute.CollectionDetail(id))
+                    }
                 }
                 is AppRoute.Settings -> NavEntry(route) {
                     settingsScreen { currentBackStack.add(AppRoute.CrashLogs) }

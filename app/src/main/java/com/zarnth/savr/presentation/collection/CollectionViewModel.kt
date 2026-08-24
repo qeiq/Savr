@@ -20,8 +20,27 @@ class CollectionViewModel(
     private val _state = MutableStateFlow(CollectionState())
     val state = _state.asStateFlow()
     private var collectionJob: Job? = null
+    private var subCollectionsJob: Job? = null
+    private val detailStack = mutableListOf<Collection>()
     private var rawCollectionBookmarks: List<Bookmark> = emptyList()
     private val parser = LinkMetadataParser()
+
+    private fun updateActiveDetailData(
+        collectionId: Long,
+        collection: Collection?,
+        items: List<CollectionDetailItem>?,
+        isLoading: Boolean
+    ) {
+        _state.update { current ->
+            val existing = current.detailDataById[collectionId] ?: CollectionDetailData()
+            val updated = CollectionDetailData(
+                collection = collection ?: existing.collection,
+                detailItems = items ?: existing.detailItems,
+                isLoading = isLoading
+            )
+            current.copy(detailDataById = current.detailDataById + (collectionId to updated))
+        }
+    }
 
     init {
         loadCollections()
@@ -38,7 +57,14 @@ class CollectionViewModel(
             }
 
             CollectionEvents.HideCreateDialog -> {
-                _state.update { it.copy(showCreateDialog = false, inputName = "") }
+                _state.update {
+                    it.copy(
+                        showCreateDialog = false,
+                        inputName = "",
+                        showCreateSubCollectionDialog = false,
+                        creatingSubCollectionFor = null
+                    )
+                }
             }
 
             CollectionEvents.CreateCollection -> {
@@ -66,7 +92,7 @@ class CollectionViewModel(
             }
 
             is CollectionEvents.SelectCollection -> {
-                selectCollection(event.collection)
+                openCollection(event.collection, push = true)
             }
 
             is CollectionEvents.RestoreCollectionDetail -> {
@@ -199,11 +225,22 @@ class CollectionViewModel(
             }
 
             is CollectionEvents.SetSortOrder -> {
-                _state.update {
-                    it.copy(
+                val sorted = sortBookmarks(rawCollectionBookmarks, event.sortOrder)
+                _state.update { current ->
+                    val activeId = current.selectedCollection?.id
+                    val existingData = activeId?.let { current.detailDataById[it] }
+                    val rebuilt = existingData?.copy(
+                        detailItems = buildDetailItems(sorted, current.subCollections, event.sortOrder)
+                    )
+                    current.copy(
                         sortOrder = event.sortOrder,
                         showSortSheet = false,
-                        collectionBookmarks = sortBookmarks(rawCollectionBookmarks, event.sortOrder)
+                        collectionBookmarks = sorted,
+                        detailDataById = if (activeId != null && rebuilt != null) {
+                            current.detailDataById + (activeId to rebuilt)
+                        } else {
+                            current.detailDataById
+                        }
                     )
                 }
             }
@@ -239,37 +276,198 @@ class CollectionViewModel(
             is CollectionEvents.AddClipboardToCollection -> {
                 addClipboardToCollection(event.url, event.title, event.description, event.imageUrl)
             }
+
+            is CollectionEvents.ShowCreateSubCollectionDialog -> {
+                _state.update {
+                    it.copy(
+                        showCreateSubCollectionDialog = true,
+                        creatingSubCollectionFor = event.parentCollection,
+                        inputName = ""
+                    )
+                }
+            }
+
+            CollectionEvents.CreateSubCollection -> {
+                createSubCollection()
+            }
+
+            is CollectionEvents.ShowDeleteCollectionDialog -> {
+                _state.update { it.copy(deleteTarget = event.collection) }
+            }
+
+            CollectionEvents.HideDeleteCollectionDialog -> {
+                _state.update { it.copy(deleteTarget = null) }
+            }
+
+            CollectionEvents.ConfirmDeleteCollection -> {
+                confirmDeleteCollection()
+            }
+
+            CollectionEvents.ResetToCollectionsList -> {
+                backToCollections()
+            }
         }
     }
 
     fun backToCollections() {
         collectionJob?.cancel()
-        _state.update { it.copy(selectedCollection = null, collectionBookmarks = emptyList()) }
-    }
-
-    private fun restoreCollectionDetail(collectionId: Long) {
-        if (_state.value.selectedCollection?.id == collectionId) return
-        val found = _state.value.collections.find { it.id == collectionId }
-        if (found != null) {
-            selectCollection(found)
+        subCollectionsJob?.cancel()
+        detailStack.clear()
+        _state.update {
+            it.copy(
+                selectedCollection = null,
+                collectionBookmarks = emptyList(),
+                detailItems = emptyList(),
+                subCollections = emptyList(),
+                parentCollection = null,
+                showCreateSubCollectionDialog = false,
+                creatingSubCollectionFor = null,
+                deleteTarget = null,
+                detailSelectedIds = emptySet(),
+                isDetailSelectionMode = false
+            )
         }
     }
 
-    private fun selectCollection(collection: Collection) {
+    private fun invalidateDetailCache(ids: Iterable<Long>) {
+        val idSet = ids.toSet()
+        if (idSet.isEmpty()) return
+        _state.update { it.copy(detailDataById = it.detailDataById - idSet) }
+    }
+
+    private fun restoreCollectionDetail(collectionId: Long) {
+        val selected = _state.value.selectedCollection
+        if (selected?.id == collectionId) {
+            if (detailStack.isEmpty()) detailStack.add(selected)
+            return
+        }
+        val stackIndex = detailStack.indexOfFirst { it.id == collectionId }
+        if (stackIndex >= 0) {
+            while (detailStack.size > stackIndex + 1) detailStack.removeAt(detailStack.lastIndex)
+            openCollection(detailStack.last(), push = false)
+            return
+        }
+        val found = _state.value.collections.find { it.id == collectionId }
+            ?: _state.value.subCollections.find { it.id == collectionId }
+        if (found != null) {
+            detailStack.clear()
+            detailStack.add(found)
+            openCollection(found, push = false)
+        } else {
+            viewModelScope.launch {
+                val fetched = repository.getCollectionById(collectionId) ?: return@launch
+                if (_state.value.selectedCollection?.id != collectionId) {
+                    detailStack.clear()
+                    detailStack.add(fetched)
+                    openCollection(fetched, push = false)
+                }
+            }
+        }
+    }
+
+    private fun openCollection(collection: Collection, push: Boolean) {
         collectionJob?.cancel()
-        _state.update { it.copy(selectedCollection = collection, collectionBookmarks = emptyList(), isDetailLoading = true) }
+        subCollectionsJob?.cancel()
+        if (push) {
+            val existing = detailStack.indexOfFirst { it.id == collection.id }
+            if (existing >= 0) {
+                while (detailStack.size > existing + 1) detailStack.removeAt(detailStack.lastIndex)
+            } else {
+                detailStack.add(collection)
+            }
+        }
+        _state.update {
+            val hasData = it.detailDataById[collection.id]?.let { d -> !d.isLoading } ?: false
+            it.copy(
+                selectedCollection = collection,
+                parentCollection = null,
+                isDetailLoading = !hasData,
+                showCreateSubCollectionDialog = false,
+                creatingSubCollectionFor = null,
+                deleteTarget = null,
+                detailDataById = if (it.detailDataById.containsKey(collection.id)) {
+                    it.detailDataById
+                } else {
+                    it.detailDataById + (collection.id to CollectionDetailData(collection = collection, isLoading = true))
+                }
+            )
+        }
+        rawCollectionBookmarks = emptyList()
         collectionJob = viewModelScope.launch {
             repository.getBookmarksInCollection(collection.id).collect { resource ->
                 when (resource) {
-                    is Resource.Loading -> _state.update { it.copy(isDetailLoading = true) }
-                    is Resource.Error -> _state.update { it.copy(isDetailLoading = false, error = resource.errorMessage ?: "Error") }
+                    is Resource.Loading -> Unit
+                    is Resource.Error -> _state.update {
+                        it.copy(
+                            isDetailLoading = false,
+                            error = resource.errorMessage ?: "Error",
+                            detailDataById = it.detailDataById + (collection.id to
+                                (it.detailDataById[collection.id] ?: CollectionDetailData()).copy(isLoading = false))
+                        )
+                    }
                     is Resource.Success -> {
                         val items = resource.data ?: emptyList()
                         rawCollectionBookmarks = items
                         val sortOrder = _state.value.sortOrder
-                        _state.update { it.copy(isDetailLoading = false, collectionBookmarks = sortBookmarks(items, sortOrder)) }
+                        val sorted = sortBookmarks(items, sortOrder)
+                        _state.update { s ->
+                            s.copy(
+                                isDetailLoading = false,
+                                collectionBookmarks = sorted
+                            )
+                        }
+                        updateActiveDetailData(
+                            collectionId = collection.id,
+                            collection = collection,
+                            items = buildDetailItems(sorted, _state.value.subCollections, sortOrder),
+                            isLoading = false
+                        )
                     }
                 }
+            }
+        }
+        loadSubCollections(collection.id)
+    }
+
+    private fun loadSubCollections(parentId: Long) {
+        subCollectionsJob?.cancel()
+        subCollectionsJob = viewModelScope.launch {
+            repository.getSubCollections(parentId).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> _state.update { it.copy(isSubCollectionsLoading = true) }
+                    is Resource.Error -> _state.update { it.copy(isSubCollectionsLoading = false, error = resource.errorMessage ?: "Error") }
+                    is Resource.Success -> {
+                        val subs = resource.data ?: emptyList()
+                        val sortOrder = _state.value.sortOrder
+                        _state.update { it.copy(isSubCollectionsLoading = false, subCollections = subs) }
+                        updateActiveDetailData(
+                            collectionId = parentId,
+                            collection = null,
+                            items = buildDetailItems(_state.value.collectionBookmarks, subs, sortOrder),
+                            isLoading = false
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun createSubCollection() {
+        val parent = _state.value.creatingSubCollectionFor ?: return
+        val name = _state.value.inputName.trim()
+        if (name.isEmpty()) return
+        viewModelScope.launch {
+            try {
+                repository.createCollection(name, parent.id)
+                _state.update {
+                    it.copy(
+                        showCreateSubCollectionDialog = false,
+                        creatingSubCollectionFor = null,
+                        inputName = ""
+                    )
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(error = e.message ?: "Create failed") }
             }
         }
     }
@@ -327,19 +525,42 @@ class CollectionViewModel(
         }
     }
 
+    private fun confirmDeleteCollection() {
+        val target = _state.value.deleteTarget ?: return
+        viewModelScope.launch {
+            try {
+                repository.deleteCollection(target)
+                detailStack.removeAll { it.id == target.id }
+                invalidateDetailCache(listOf(target.id))
+                _state.update { it.copy(deleteTarget = null) }
+                if (target.id == _state.value.selectedCollection?.id) {
+                    val parent = detailStack.lastOrNull()
+                    if (parent == null) backToCollections() else openCollection(parent, push = false)
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(error = e.message ?: "Delete failed", deleteTarget = null) }
+            }
+        }
+    }
+
     private fun deleteSelected() {
         val selected = _state.value.collections.filter { it.id in _state.value.selectedIds }
         if (selected.isEmpty()) return
         viewModelScope.launch {
             selected.forEach { repository.deleteCollection(it) }
+            invalidateDetailCache(selected.map { it.id })
             _state.update { it.copy(selectedIds = emptySet(), isSelectionMode = false) }
         }
     }
 
     private fun deleteCollectionById(collectionId: Long) {
         viewModelScope.launch {
-            val collection = _state.value.collections.find { it.id == collectionId } ?: return@launch
+            val collection = _state.value.collections.find { it.id == collectionId }
+                ?: _state.value.subCollections.find { it.id == collectionId }
+                ?: repository.getCollectionById(collectionId)
+                ?: return@launch
             repository.deleteCollection(collection)
+            invalidateDetailCache(listOf(collectionId))
             backToCollections()
         }
     }
@@ -463,6 +684,27 @@ class CollectionViewModel(
                 }
             }
         }
+    }
+
+    private fun buildDetailItems(
+        bookmarks: List<Bookmark>,
+        subCollections: List<Collection>,
+        sortOrder: SortOrder
+    ): List<CollectionDetailItem> {
+        val pinned = bookmarks.filter { it.isPinned }
+            .sortedBy { it.pinnedAt ?: Long.MAX_VALUE }
+            .map { CollectionDetailItem.BookmarkRow(it) }
+        val rest = buildList {
+            addAll(bookmarks.filterNot { it.isPinned }.map { CollectionDetailItem.BookmarkRow(it) })
+            addAll(subCollections.map { CollectionDetailItem.SubCollectionRow(it) })
+        }
+        val sortedRest = when (sortOrder) {
+            SortOrder.DATE_NEWEST -> rest.sortedByDescending { it.createdAt }
+            SortOrder.DATE_OLDEST -> rest.sortedBy { it.createdAt }
+            SortOrder.TITLE_ASC -> rest.sortedBy { it.title.lowercase() }
+            SortOrder.TITLE_DESC -> rest.sortedByDescending { it.title.lowercase() }
+        }
+        return pinned + sortedRest
     }
 
     private fun sortBookmarks(bookmarks: List<Bookmark>, sortOrder: SortOrder): List<Bookmark> {

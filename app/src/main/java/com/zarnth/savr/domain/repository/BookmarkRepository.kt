@@ -18,9 +18,12 @@ interface BookmarkRepository {
     suspend fun searchBookmarks(text: String): Flow<Resource<List<Bookmark>>>
 
     suspend fun createCollection(name: String): Long
+    suspend fun createCollection(name: String, parentCollectionId: Long?): Long
     suspend fun renameCollection(id: Long, name: String)
     suspend fun deleteCollection(collection: Collection)
     fun getAllCollections(): Flow<Resource<List<Collection>>>
+    fun getSubCollections(parentCollectionId: Long): Flow<Resource<List<Collection>>>
+    suspend fun getCollectionById(id: Long): Collection?
     fun getBookmarksInCollection(collectionId: Long): Flow<Resource<List<Bookmark>>>
     suspend fun addBookmarkToCollection(bookmarkId: Long, collectionId: Long)
     suspend fun addBookmarksToCollection(bookmarkIds: List<Long>, collectionId: Long)
@@ -31,4 +34,5 @@ interface BookmarkRepository {
     suspend fun updateTitleAndDescription(id: Long, title: String?, description: String?)
     suspend fun setBookmarkPinned(id: Long, isPinned: Boolean, pinnedAt: Long?)
     suspend fun setBookmarkPinnedInCollection(bookmarkId: Long, collectionId: Long, isPinned: Boolean, pinnedAt: Long?)
+    suspend fun setParentCollection(collectionId: Long, parentCollectionId: Long?)
 }

@@ -143,14 +143,18 @@ fun DefaultTopBar(
     showSortButton: Boolean,
     scrollBehavior: TopAppBarScrollBehavior,
     onSearchClick: () -> Unit,
-    onSortClick: () -> Unit
+    onSortClick: () -> Unit,
+    collectionName: String? = null
 ) {
     LargeTopAppBar(
         scrollBehavior = scrollBehavior,
         title = {
             Text(
-                if (currentTab == 0) "Savr Bookmarks"
-                else bottomAppBarItems[currentTab].title
+                when {
+                    currentTab == 0 -> "Savr Bookmarks"
+                    collectionName != null -> collectionName
+                    else -> bottomAppBarItems[currentTab].title
+                }
             )
         },
         actions = {

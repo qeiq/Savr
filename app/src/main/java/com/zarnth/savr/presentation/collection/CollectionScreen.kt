@@ -15,6 +15,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Alignment
@@ -34,6 +35,10 @@ fun CollectionScreen(
     viewModel: CollectionViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.onEvent(CollectionEvents.ResetToCollectionsList)
+    }
 
     BackHandler(enabled = state.isSelectionMode) {
         viewModel.onEvent(CollectionEvents.ClearSelection)

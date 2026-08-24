@@ -69,18 +69,11 @@ class BackupManager(
         stopAutoBackup()
         autoBackupJob = scope.launch {
             combine(
-                bookmarkDao.getAllBookmarks(),
-                collectionDao.getAllCollections()
+                bookmarkDao.getAllBookmarksForBackup(),
+                collectionDao.getAllCollectionsRaw()
             ) { bookmarks, collections ->
-                val backupBookmarks = bookmarks.map { BackupBookmark(url = it.url, title = it.title, description = it.description, imageUrl = it.imageUrl, createdAt = it.createdAt, isPinned = it.isPinned, pinnedAt = it.pinnedAt) }
-                val backupCollections = collections.mapNotNull { collection ->
-                    val urls = collectionDao.getBookmarkUrlsForCollection(collection.id)
-                    if (collection.name.isNotBlank()) BackupCollection(
-                        name = collection.name,
-                        bookmarkUrls = urls,
-                        pinnedBookmarkUrls = collectionDao.getPinnedBookmarkUrlsForCollection(collection.id)
-                    ) else null
-                }
+                val backupBookmarks = bookmarks.map { BackupBookmark(url = it.url, title = it.title, description = it.description, imageUrl = it.imageUrl, createdAt = it.createdAt, isCollectionOnly = it.isCollectionOnly, isPinned = it.isPinned, pinnedAt = it.pinnedAt) }
+                val backupCollections = buildBackupCollections(collections)
                 BackupData(bookmarks = backupBookmarks, collections = backupCollections)
             }
                 .debounce(500)
@@ -113,22 +106,55 @@ class BackupManager(
 
     @SuppressLint("NewApi")
     private fun writeToDownloads(jsonString: String) {
-        val collectionUri = MediaStore.Downloads.EXTERNAL_CONTENT_URI
-        val selection = "${MediaStore.Downloads.DISPLAY_NAME} = ?"
-        val selectionArgs = arrayOf(FILE_NAME)
-        context.contentResolver.delete(collectionUri, selection, selectionArgs)
+        val resolver = context.contentResolver
+        val bytes = jsonString.toByteArray()
+
+        deleteAllBackupEntries(resolver)
+
         val contentValues = ContentValues().apply {
             put(MediaStore.Downloads.DISPLAY_NAME, FILE_NAME)
             put(MediaStore.Downloads.MIME_TYPE, "application/json")
             put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/Savr")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Downloads.IS_PENDING, 0)
+            put(MediaStore.Downloads.IS_PENDING, 1)
+        }
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+        uri?.let {
+            runCatching {
+                resolver.openOutputStream(it)?.use { output ->
+                    output.write(bytes)
+                }
+                val done = ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }
+                resolver.update(it, done, null, null)
             }
         }
-        val uri = context.contentResolver.insert(collectionUri, contentValues)
-        uri?.let {
-            context.contentResolver.openOutputStream(it)?.use { output ->
-                output.write(jsonString.toByteArray())
+    }
+
+    @SuppressLint("NewApi")
+    private fun deleteAllBackupEntries(resolver: android.content.ContentResolver) {
+        val relativePath = "${Environment.DIRECTORY_DOWNLOADS}/Savr/"
+        val projection = arrayOf(MediaStore.Downloads._ID)
+        val selection =
+            "${MediaStore.Downloads.RELATIVE_PATH} = ? AND ${MediaStore.Downloads.DISPLAY_NAME} LIKE ?"
+        val selectionArgs = arrayOf(relativePath, "savr_autobackup%.json")
+        runCatching {
+            resolver.query(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                projection,
+                selection,
+                selectionArgs,
+                null
+            )?.use { cursor ->
+                val idCol = cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID)
+                while (cursor.moveToNext()) {
+                    val id = cursor.getLong(idCol)
+                    runCatching {
+                        resolver.delete(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI.buildUpon()
+                                .appendPath(id.toString()).build(),
+                            null, null
+                        )
+                    }
+                }
             }
         }
     }
@@ -139,21 +165,46 @@ class BackupManager(
     }
 
     suspend fun generateBackupJson(): String {
-        val bookmarks = bookmarkDao.getBookmarksOnce()
+        val bookmarks = bookmarkDao.getAllBookmarksForBackupOnce()
         val collections = collectionDao.getAllCollectionsRaw().first()
 
-        val backupBookmarks = bookmarks.map { BackupBookmark(url = it.url, title = it.title, description = it.description, imageUrl = it.imageUrl, createdAt = it.createdAt, isPinned = it.isPinned, pinnedAt = it.pinnedAt) }
-        val backupCollections = collections.mapNotNull { collection ->
-            val urls = collectionDao.getBookmarkUrlsForCollection(collection.id)
-            if (collection.name.isNotBlank()) BackupCollection(
-                name = collection.name,
-                bookmarkUrls = urls,
-                pinnedBookmarkUrls = collectionDao.getPinnedBookmarkUrlsForCollection(collection.id)
-            ) else null
-        }
+        val backupBookmarks = bookmarks.map { BackupBookmark(url = it.url, title = it.title, description = it.description, imageUrl = it.imageUrl, createdAt = it.createdAt, isCollectionOnly = it.isCollectionOnly, isPinned = it.isPinned, pinnedAt = it.pinnedAt) }
+        val backupCollections = buildBackupCollections(collections)
 
         val data = BackupData(bookmarks = backupBookmarks, collections = backupCollections)
         return json.encodeToString(data)
+    }
+
+    private suspend fun buildBackupCollections(collections: List<CollectionEntity>): List<BackupCollection> {
+        val byId = collections.associateBy { it.id }
+        return orderParentsFirst(collections).mapNotNull { collection ->
+            if (collection.name.isBlank()) return@mapNotNull null
+            BackupCollection(
+                name = collection.name,
+                bookmarkUrls = collectionDao.getBookmarkUrlsForCollection(collection.id),
+                pinnedBookmarkUrls = collectionDao.getPinnedBookmarkUrlsForCollection(collection.id),
+                parentName = collection.parentCollectionId?.let { byId[it]?.name }
+            )
+        }
+    }
+
+    private fun orderParentsFirst(collections: List<CollectionEntity>): List<CollectionEntity> {
+        val childrenOf = collections.groupBy { it.parentCollectionId }
+        val ordered = mutableListOf<CollectionEntity>()
+        val visited = mutableSetOf<Long>()
+        fun walk(parentId: Long?) {
+            for (child in childrenOf[parentId].orEmpty().sortedByDescending { it.createdAt }) {
+                if (visited.add(child.id)) {
+                    ordered.add(child)
+                    walk(child.id)
+                }
+            }
+        }
+        walk(null)
+        for (c in collections) {
+            if (visited.add(c.id)) ordered.add(c)
+        }
+        return ordered
     }
 
     suspend fun generateExportHtml(): String {
@@ -166,24 +217,39 @@ class BackupManager(
         sb.appendLine("<H1>Savr Bookmarks</H1>")
         sb.appendLine("<DL><p>")
 
-        val collectionBookmarkIds = mutableMapOf<Long, MutableSet<Long>>()
-        for (c in collections) {
-            val urls = collectionDao.getBookmarkUrlsForCollection(c.id)
-            val ids = bookmarks.filter { it.url in urls }.map { it.id }.toMutableSet()
-            collectionBookmarkIds[c.id] = ids
+        val byId = collections.associateBy { it.id }
+        val childrenOf = collections.groupBy { it.parentCollectionId }
+        val written = mutableSetOf<Long>()
+        val assigned = mutableSetOf<Long>()
+
+        suspend fun appendLinks(collectionId: Long, indent: String) {
+            for (bm in bookmarks.filter { it.url in collectionDao.getBookmarkUrlsForCollection(collectionId) }) {
+                assigned.add(bm.id)
+                sb.appendLine("$indent<DT><A HREF=\"${escapeHtml(bm.url)}\"${if (bm.title != null) ">${escapeHtml(bm.title)}" else ">${escapeHtml(bm.url)}"}</A>")
+            }
         }
 
-        val assigned = mutableSetOf<Long>()
-        for (c in collections) {
-            val ids = collectionBookmarkIds[c.id] ?: continue
-            if (ids.isEmpty()) continue
-            assigned.addAll(ids)
-            sb.appendLine("<DT><H3>${escapeHtml(c.name)}</H3>")
-            sb.appendLine("<DL><p>")
-            for (bm in bookmarks.filter { it.id in ids }) {
-                sb.appendLine("<DT><A HREF=\"${escapeHtml(bm.url)}\"${if (bm.title != null) ">${escapeHtml(bm.title)}" else ">${escapeHtml(bm.url)}"}</A>")
+        suspend fun appendFolder(c: CollectionEntity, indent: String) {
+            if (!written.add(c.id)) return
+            sb.appendLine("$indent<DT><H3>${escapeHtml(c.name)}")
+            sb.appendLine("$indent<DL><p>")
+            appendLinks(c.id, indent)
+            for (child in childrenOf[c.id].orEmpty().sortedByDescending { it.createdAt }) {
+                if (written.contains(child.id)) continue
+                appendFolder(child, "$indent    ")
             }
-            sb.appendLine("</DL><p>")
+            sb.appendLine("$indent</DL><p>")
+        }
+
+        suspend fun walkLevel(parentId: Long?, indent: String) {
+            for (c in childrenOf[parentId].orEmpty().sortedByDescending { it.createdAt }) {
+                appendFolder(c, indent)
+            }
+        }
+
+        walkLevel(null, "")
+        for (c in collections) {
+            if (!written.contains(c.id)) appendFolder(c, "")
         }
 
         val unassigned = bookmarks.filter { it.id !in assigned }
@@ -267,39 +333,74 @@ class BackupManager(
     suspend fun importFromJson(jsonString: String) {
         val backupData = json.decodeFromString<BackupData>(jsonString)
 
-        val existingByUrl = bookmarkDao.getBookmarksOnce().associateBy { it.url }
+        // url -> bookmark entity, kept up to date as rows are inserted so that
+        // collection links below always resolve (even for URLs that are missing
+        // from the backup's top-level bookmarks array).
+        val bookmarkMap = bookmarkDao.getBookmarksOnce().associateBy { it.url }.toMutableMap()
 
-        for (b in backupData.bookmarks) {
-            val existing = existingByUrl[b.url]
-            if (existing == null) {
-                bookmarkDao.insertWithReturn(BookmarkEntity(url = b.url, title = b.title, description = b.description, imageUrl = b.imageUrl, createdAt = b.createdAt, isPinned = b.isPinned, pinnedAt = b.pinnedAt))
-            } else if (b.isPinned) {
-                bookmarkDao.setPinned(existing.id, true, b.pinnedAt)
+        suspend fun ensureBookmark(url: String, source: BackupBookmark? = null): BookmarkEntity? {
+            bookmarkMap[url]?.let { existing ->
+                if (source?.isPinned == true) {
+                    bookmarkDao.setPinned(existing.id, true, source.pinnedAt)
+                }
+                return existing
             }
+            val hidden = bookmarkDao.findHiddenByUrl(url)
+            val entity: BookmarkEntity? = if (hidden != null) {
+                bookmarkDao.unhideBookmark(hidden.id, hidden.title, hidden.description, hidden.imageUrl, hidden.createdAt)
+                bookmarkDao.getBookmarkByUrl(url)
+            } else {
+                val insertedId = bookmarkDao.insertWithReturn(BookmarkEntity(
+                    url = url,
+                    title = source?.title,
+                    description = source?.description,
+                    imageUrl = source?.imageUrl,
+                    createdAt = source?.createdAt ?: System.currentTimeMillis(),
+                    isCollectionOnly = source?.isCollectionOnly ?: true,
+                    isPinned = source?.isPinned ?: false,
+                    pinnedAt = source?.pinnedAt
+                ))
+                bookmarkDao.getBookmarkByUrl(url)
+                    ?: BookmarkEntity(id = insertedId, url = url, title = source?.title, description = source?.description, imageUrl = source?.imageUrl, createdAt = source?.createdAt ?: System.currentTimeMillis(), isCollectionOnly = source?.isCollectionOnly ?: true, isPinned = source?.isPinned ?: false, pinnedAt = source?.pinnedAt)
+            }
+            if (entity != null) bookmarkMap[url] = entity
+            return entity
         }
 
-        val bookmarkMap = bookmarkDao.getBookmarksOnce().associateBy { it.url }
+        for (b in backupData.bookmarks) {
+            ensureBookmark(b.url, b)
+        }
 
         val existingCollections = collectionDao.getAllCollectionsRaw().first().associateBy { it.name }
         val collectionNameToId = existingCollections.mapValues { it.value.id }.toMutableMap()
 
-        for (c in backupData.collections) {
+        suspend fun restoreCollection(c: BackupCollection) {
+            val parentId = c.parentName?.let { collectionNameToId[it] }
             val collectionId = collectionNameToId.getOrPut(c.name) {
-                collectionDao.insertCollection(CollectionEntity(name = c.name))
+                collectionDao.insertCollection(CollectionEntity(name = c.name, parentCollectionId = parentId))
             }
             c.bookmarkUrls.forEach { url ->
-                bookmarkMap[url]?.let { bm ->
+                ensureBookmark(url)?.let { bm ->
                     collectionDao.addBookmarkToCollection(BookmarkCollectionCrossRef(bm.id, collectionId))
                 }
             }
             if (c.pinnedBookmarkUrls.isNotEmpty()) {
                 val base = System.currentTimeMillis()
                 c.pinnedBookmarkUrls.forEachIndexed { index, url ->
-                    bookmarkMap[url]?.let { bm ->
+                    ensureBookmark(url)?.let { bm ->
                         collectionDao.setPinnedInCollection(bm.id, collectionId, true, base + index)
                     }
                 }
             }
         }
+
+        val pending = backupData.collections.toMutableList()
+        while (pending.isNotEmpty()) {
+            val ready = pending.filter { it.parentName == null || collectionNameToId.containsKey(it.parentName) }
+            if (ready.isEmpty()) break
+            pending.removeAll(ready.toSet())
+            for (c in ready) restoreCollection(c)
+        }
+        for (c in pending) restoreCollection(c)
     }
 }

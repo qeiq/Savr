@@ -47,4 +47,10 @@ sealed class CollectionEvents {
         val description: String?,
         val imageUrl: String?
     ) : CollectionEvents()
+    data class ShowCreateSubCollectionDialog(val parentCollection: Collection) : CollectionEvents()
+    object CreateSubCollection : CollectionEvents()
+    data class ShowDeleteCollectionDialog(val collection: Collection) : CollectionEvents()
+    object HideDeleteCollectionDialog : CollectionEvents()
+    object ConfirmDeleteCollection : CollectionEvents()
+    object ResetToCollectionsList : CollectionEvents()
 }

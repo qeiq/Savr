@@ -239,6 +239,7 @@ fun RootScreen(
                             showSearchButton = showSearchButton,
                             showSortButton = showSortButton,
                             scrollBehavior = scrollBehavior,
+                            collectionName = collectionState.selectedCollection?.name,
                             onSearchClick = {
                                 if (currentTab == 0) {
                                     isSearching = true
@@ -261,17 +262,22 @@ fun RootScreen(
                     }
                 }
             },
-            floatingActionButton = {
-                RootFab(
-                    currentTab = currentTab,
-                    homeState = state,
-                    collectionState = collectionState,
-                    isSearching = isSearching,
-                    onHomeFabClick = { viewModel.homeEvents(HomeEvents.FabClick) },
-                    onCollectionFabClick = { collectionViewModel.onEvent(CollectionEvents.ShowCreateDialog) },
-                    onCollectionAddBookmarkClick = { collectionViewModel.onEvent(CollectionEvents.ShowAddBookmarkSheet) }
-                )
-            }
+                floatingActionButton = {
+                    RootFab(
+                        currentTab = currentTab,
+                        homeState = state,
+                        collectionState = collectionState,
+                        isSearching = isSearching,
+                        onHomeFabClick = { viewModel.homeEvents(HomeEvents.FabClick) },
+                        onCollectionFabClick = { collectionViewModel.onEvent(CollectionEvents.ShowCreateDialog) },
+                        onCollectionAddBookmarkClick = { collectionViewModel.onEvent(CollectionEvents.ShowAddBookmarkSheet) },
+                        onCollectionAddSubCollectionClick = {
+                            collectionState.selectedCollection?.let {
+                                collectionViewModel.onEvent(CollectionEvents.ShowCreateSubCollectionDialog(it))
+                            }
+                        }
+                    )
+                }
         ) { innerPadding ->
             AppNavHost(
                 modifier = Modifier
@@ -291,9 +297,10 @@ fun RootScreen(
                     )
                 },
                 collectionsScreen = { navigateToDetail -> CollectionScreen(onCollectionClick = navigateToDetail) },
-                collectionDetailScreen = { collectionId ->
+                collectionDetailScreen = { collectionId, onNavigateToSubCollection ->
                     CollectionDetailScreen(
                         collectionId = collectionId,
+                        onNavigateToSubCollection = onNavigateToSubCollection,
                         tapAction = settingState.tapAction,
                         viewMode = settingState.viewMode,
                         viewModel = collectionViewModel,
@@ -307,7 +314,8 @@ fun RootScreen(
                         onOpenCrashLogs = onOpenCrashLogs
                     )
                 },
-                crashLogScreen = { CrashLogScreen(viewModel = crashLogViewModel) }
+                crashLogScreen = { CrashLogScreen(viewModel = crashLogViewModel) },
+                onRestoreCollection = { collectionViewModel.onEvent(CollectionEvents.RestoreCollectionDetail(it)) }
             )
 
             BackHandler(enabled = isSearching) {

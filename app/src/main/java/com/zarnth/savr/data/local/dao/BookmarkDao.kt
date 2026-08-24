@@ -64,6 +64,12 @@ interface BookmarkDao {
     @Query("SELECT * FROM bookmarks WHERE isHidden = 0")
     suspend fun getBookmarksOnce(): List<BookmarkEntity>
 
+    @Query("SELECT * FROM bookmarks WHERE isHidden = 0 OR id IN (SELECT bookmarkId FROM bookmark_collection_cross_ref)")
+    fun getAllBookmarksForBackup(): Flow<List<BookmarkEntity>>
+
+    @Query("SELECT * FROM bookmarks WHERE isHidden = 0 OR id IN (SELECT bookmarkId FROM bookmark_collection_cross_ref)")
+    suspend fun getAllBookmarksForBackupOnce(): List<BookmarkEntity>
+
     @Query("SELECT * FROM bookmarks WHERE isHidden = 0 AND (title IS NULL OR title = '' OR description IS NULL OR description = '')")
     suspend fun getBookmarksMissingMetadataOnce(): List<BookmarkEntity>
 

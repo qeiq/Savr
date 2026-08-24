@@ -15,7 +15,8 @@ data class CollectionWithCount(
     val id: Long,
     val name: String,
     val createdAt: Long,
-    val bookmarkCount: Int
+    val bookmarkCount: Int,
+    val parentCollectionId: Long?
 )
 
 data class BookmarkWithCollectionPin(
@@ -37,13 +38,24 @@ interface CollectionDao {
     suspend fun deleteCollection(collection: CollectionEntity)
 
     @Query("""
-        SELECT c.id, c.name, c.createdAt, COUNT(bcc.collectionId) AS bookmarkCount
+        SELECT c.id, c.name, c.createdAt, COUNT(bcc.collectionId) AS bookmarkCount, c.parentCollectionId
         FROM collections c
         LEFT JOIN bookmark_collection_cross_ref bcc ON c.id = bcc.collectionId
+        WHERE c.parentCollectionId IS NULL
         GROUP BY c.id
         ORDER BY c.createdAt DESC
     """)
     fun getAllCollections(): Flow<List<CollectionWithCount>>
+
+    @Query("""
+        SELECT c.id, c.name, c.createdAt, COUNT(bcc.collectionId) AS bookmarkCount, c.parentCollectionId
+        FROM collections c
+        LEFT JOIN bookmark_collection_cross_ref bcc ON c.id = bcc.collectionId
+        WHERE c.parentCollectionId = :parentId
+        GROUP BY c.id
+        ORDER BY c.createdAt DESC
+    """)
+    fun getSubCollections(parentId: Long): Flow<List<CollectionWithCount>>
 
     @Query("""
         SELECT b.imageUrl FROM bookmarks b
@@ -101,4 +113,13 @@ interface CollectionDao {
         ORDER BY bcc.pinnedAt ASC
     """)
     suspend fun getPinnedBookmarkUrlsForCollection(collectionId: Long): List<String>
+
+    @Query("SELECT * FROM collections WHERE id = :id")
+    suspend fun getCollectionById(id: Long): CollectionEntity?
+
+    @Query("UPDATE collections SET parentCollectionId = :parentId WHERE id = :id")
+    suspend fun setParentCollection(id: Long, parentId: Long?)
+
+    @Query("DELETE FROM collections WHERE parentCollectionId = :parentId")
+    suspend fun deleteSubCollections(parentId: Long)
 }

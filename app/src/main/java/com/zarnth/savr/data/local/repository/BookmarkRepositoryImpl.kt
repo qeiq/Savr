@@ -3,6 +3,7 @@ package com.zarnth.savr.data.local.repository
 import com.zarnth.savr.data.local.dao.BookmarkDao
 import com.zarnth.savr.data.local.dao.CollectionDao
 import com.zarnth.savr.data.local.entity.BookmarkCollectionCrossRef
+import com.zarnth.savr.data.local.entity.CollectionEntity
 import com.zarnth.savr.data.local.mapper.toDomain
 import com.zarnth.savr.data.local.mapper.toEntity
 import com.zarnth.savr.domain.model.Bookmark
@@ -82,7 +83,13 @@ class BookmarkRepositoryImpl(
 
     override suspend fun createCollection(name: String): Long {
         return collectionDao.insertCollection(
-            com.zarnth.savr.data.local.entity.CollectionEntity(name = name)
+            CollectionEntity(name = name)
+        )
+    }
+
+    override suspend fun createCollection(name: String, parentCollectionId: Long?): Long {
+        return collectionDao.insertCollection(
+            CollectionEntity(name = name, parentCollectionId = parentCollectionId)
         )
     }
 
@@ -103,7 +110,9 @@ class BookmarkRepositoryImpl(
                             id = c.id,
                             name = c.name,
                             bookmarkCount = c.bookmarkCount,
-                            previewUrls = collectionDao.getPreviewUrlsForCollection(c.id)
+                            previewUrls = collectionDao.getPreviewUrlsForCollection(c.id),
+                            parentCollectionId = c.parentCollectionId,
+                            createdAt = c.createdAt
                         )
                     }
                     emit(Resource.Success(result) as Resource<List<Collection>>)
@@ -111,6 +120,31 @@ class BookmarkRepositoryImpl(
             }
             .onStart { emit(Resource.Loading()) }
             .catch { e -> emit(Resource.Error(e.message ?: "Unknown error")) }
+    }
+
+    override fun getSubCollections(parentCollectionId: Long): Flow<Resource<List<Collection>>> {
+        return collectionDao.getSubCollections(parentCollectionId)
+            .flatMapLatest { collections ->
+                flow {
+                    val result = collections.map { c ->
+                        Collection(
+                            id = c.id,
+                            name = c.name,
+                            bookmarkCount = c.bookmarkCount,
+                            previewUrls = collectionDao.getPreviewUrlsForCollection(c.id),
+                            parentCollectionId = c.parentCollectionId,
+                            createdAt = c.createdAt
+                        )
+                    }
+                    emit(Resource.Success(result) as Resource<List<Collection>>)
+                }
+            }
+            .onStart { emit(Resource.Loading()) }
+            .catch { e -> emit(Resource.Error(e.message ?: "Unknown error")) }
+    }
+
+    override suspend fun getCollectionById(id: Long): Collection? {
+        return collectionDao.getCollectionById(id)?.toDomain()
     }
 
     override fun getBookmarksInCollection(collectionId: Long): Flow<Resource<List<Bookmark>>> {
@@ -158,5 +192,9 @@ class BookmarkRepositoryImpl(
 
     override suspend fun setBookmarkPinnedInCollection(bookmarkId: Long, collectionId: Long, isPinned: Boolean, pinnedAt: Long?) {
         collectionDao.setPinnedInCollection(bookmarkId, collectionId, isPinned, pinnedAt)
+    }
+
+    override suspend fun setParentCollection(collectionId: Long, parentCollectionId: Long?) {
+        collectionDao.setParentCollection(collectionId, parentCollectionId)
     }
 }
