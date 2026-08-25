@@ -37,7 +37,7 @@ interface BookmarkDao {
     @Query("SELECT * FROM bookmarks WHERE isHidden = 0")
     fun getAllBookmarks(): Flow<List<BookmarkEntity>>
 
-    @Query("SELECT * FROM bookmarks WHERE isHidden = 0 AND isCollectionOnly = 0 AND (title LIKE '%' || :searchQuery || '%' OR url LIKE '%' || :searchQuery || '%')")
+    @Query("SELECT * FROM bookmarks WHERE isHidden = 0 AND isCollectionOnly = 0 AND (title LIKE '%' || :searchQuery || '%' OR url LIKE '%' || :searchQuery || '%' OR description LIKE '%' || :searchQuery || '%')")
     fun searchBookmarks(searchQuery: String): Flow<List<BookmarkEntity>>
 
     @Query("UPDATE bookmarks SET isHidden = 1 WHERE id IN (:ids)")

@@ -139,7 +139,7 @@ fun CollectionDetailScreen(
                     LazyVerticalStaggeredGrid(
                         state = gridState,
                         modifier = Modifier.fillMaxSize(),
-                        columns = StaggeredGridCells.Adaptive(180.dp),
+                        columns = StaggeredGridCells.Adaptive(160.dp),
                         contentPadding = PaddingValues(8.dp),
                         verticalItemSpacing = 6.dp,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)

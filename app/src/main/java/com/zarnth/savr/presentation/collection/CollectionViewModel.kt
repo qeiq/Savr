@@ -691,20 +691,26 @@ class CollectionViewModel(
         subCollections: List<Collection>,
         sortOrder: SortOrder
     ): List<CollectionDetailItem> {
-        val pinned = bookmarks.filter { it.isPinned }
+        val comparator = when (sortOrder) {
+            SortOrder.DATE_NEWEST -> compareByDescending<CollectionDetailItem> { it.createdAt }
+            SortOrder.DATE_OLDEST -> compareBy<CollectionDetailItem> { it.createdAt }
+            SortOrder.TITLE_ASC -> compareBy<CollectionDetailItem> { it.title.lowercase() }
+            SortOrder.TITLE_DESC -> compareByDescending<CollectionDetailItem> { it.title.lowercase() }
+        }
+
+        val pinnedBookmarks = bookmarks.filter { it.isPinned }
             .sortedBy { it.pinnedAt ?: Long.MAX_VALUE }
             .map { CollectionDetailItem.BookmarkRow(it) }
-        val rest = buildList {
-            addAll(bookmarks.filterNot { it.isPinned }.map { CollectionDetailItem.BookmarkRow(it) })
-            addAll(subCollections.map { CollectionDetailItem.SubCollectionRow(it) })
-        }
-        val sortedRest = when (sortOrder) {
-            SortOrder.DATE_NEWEST -> rest.sortedByDescending { it.createdAt }
-            SortOrder.DATE_OLDEST -> rest.sortedBy { it.createdAt }
-            SortOrder.TITLE_ASC -> rest.sortedBy { it.title.lowercase() }
-            SortOrder.TITLE_DESC -> rest.sortedByDescending { it.title.lowercase() }
-        }
-        return pinned + sortedRest
+
+        val subCollectionRows = subCollections
+            .map { CollectionDetailItem.SubCollectionRow(it) }
+            .sortedWith(comparator)
+
+        val regularBookmarks = bookmarks.filterNot { it.isPinned }
+            .map { CollectionDetailItem.BookmarkRow(it) }
+            .sortedWith(comparator)
+
+        return pinnedBookmarks + subCollectionRows + regularBookmarks
     }
 
     private fun sortBookmarks(bookmarks: List<Bookmark>, sortOrder: SortOrder): List<Bookmark> {
