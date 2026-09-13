@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.zarnth.savr.domain.model.Bookmark
 import com.zarnth.savr.domain.model.Collection
 import com.zarnth.savr.domain.repository.BookmarkRepository
+import com.zarnth.savr.domain.repository.SettingsRepository
 import com.zarnth.savr.link_fetcher.LinkMetadataParser
 import com.zarnth.savr.domain.model.SortOrder
 import com.zarnth.savr.utils.Resource
@@ -17,8 +18,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
-class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
-    private val _state = MutableStateFlow(HomeState())
+class HomeViewModel(
+    private val repository: BookmarkRepository,
+    private val settingsRepository: SettingsRepository
+) : ViewModel() {
+    private val _state = MutableStateFlow(
+        HomeState(sortOrder = settingsRepository.getSortOrder())
+    )
     val state = _state.asStateFlow()
 
     private val parser = LinkMetadataParser()
@@ -144,6 +150,19 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
                 deleteSelected()
             }
 
+            HomeEvents.ConfirmDeleteSelected -> {
+                _state.update { it.copy(showDeleteConfirm = false) }
+                deleteSelected()
+            }
+
+            HomeEvents.ShowDeleteConfirmDialog -> {
+                _state.update { it.copy(showDeleteConfirm = true) }
+            }
+
+            HomeEvents.HideDeleteConfirmDialog -> {
+                _state.update { it.copy(showDeleteConfirm = false) }
+            }
+
             HomeEvents.ClearSelection -> {
                 _state.update {
                     it.copy(
@@ -189,6 +208,7 @@ class HomeViewModel(private val repository: BookmarkRepository) : ViewModel() {
             }
 
             is HomeEvents.SetSortOrder -> {
+                settingsRepository.setSortOrder(events.sortOrder)
                 _state.update {
                     it.copy(
                         sortOrder = events.sortOrder,

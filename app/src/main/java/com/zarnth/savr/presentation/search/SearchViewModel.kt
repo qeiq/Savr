@@ -17,6 +17,7 @@ class SearchViewModel(
     val state = _state.asStateFlow()
 
     private var searchJob: Job? = null
+    private var collectionSearchJob: Job? = null
 
     fun onQueryChange(query: String) {
         _state.update { it.copy(searchQuery = query) }
@@ -33,6 +34,32 @@ class SearchViewModel(
                     is Resource.Loading -> _state.update { it.copy(isLoading = true) }
                     is Resource.Error -> _state.update { it.copy(isLoading = false, error = resource.errorMessage ?: "Error") }
                     is Resource.Success -> _state.update { it.copy(isLoading = false, searchResults = resource.data ?: emptyList()) }
+                }
+            }
+        }
+    }
+
+    fun onCollectionQueryChange(collectionId: Long, query: String) {
+        _state.update { it.copy(collectionSearchQuery = query) }
+
+        collectionSearchJob?.cancel()
+        if (query.isBlank()) {
+            _state.update {
+                it.copy(collectionSearchResults = emptyList(), isCollectionSearching = false)
+            }
+            return
+        }
+
+        _state.update { it.copy(isCollectionSearching = true, error = "") }
+        collectionSearchJob = viewModelScope.launch {
+            try {
+                val results = repository.searchBookmarksInCollection(collectionId, query)
+                _state.update {
+                    it.copy(isCollectionSearching = false, collectionSearchResults = results)
+                }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(isCollectionSearching = false, error = e.message ?: "Search failed")
                 }
             }
         }

@@ -73,7 +73,7 @@ val savrModule = module {
     }
 
     viewModel {
-        HomeViewModel(get())
+        HomeViewModel(get(), get())
     }
 
     viewModel {
@@ -81,7 +81,7 @@ val savrModule = module {
     }
 
     viewModel {
-        CollectionViewModel(get())
+        CollectionViewModel(get(), get())
     }
 
     viewModel {

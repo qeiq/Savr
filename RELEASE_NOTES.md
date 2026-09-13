@@ -1,22 +1,22 @@
-# Savr v1.3.7
+# Savr v1.3.8
 
 ## What's new
 
-- **Pin important bookmarks.** Pin a bookmark on Home (or inside a collection) to keep it at the top — pinned items are preserved in your backups too.
-- **Rename collections.** Long-press the pencil on a collection card to rename it.
-- **Add links straight into a collection.** Tap the **+** button inside any collection and paste a link — it's saved into that collection only, without showing up on your Home screen.
-- **Smart clipboard popup.** When you're inside a collection, the "add this link?" popup now saves into that collection (and the button says so). On Home it still saves as a normal bookmark.
+- **Sub-collections.** Organize collections inside collections — create a sub-collection right from any collection and drill down as deep as you like.
+- **Full-text search inside collections.** Search is no longer limited to Home — open any collection and search its bookmarks by title, link, or description, and results include everything inside its sub-collections too.
+- **Smarter in-collection search.** Searching inside a collection now checks the same fields as Home search (title, URL, description), so you actually find what you're looking for.
+- **Remembered sort order.** Pick "Date added (oldest first)", "Title (A-Z)", etc. and Savr remembers it — no more resetting to newest-first every time you reopen the app.
+- **Confirmation before deleting.** Deleting bookmarks, deleting collections, or removing bookmarks from a collection now asks "are you sure?" first, with a clear Cancel/Delete dialog — no more accidental wipes.
+- **Metadata fetched on JSON import.** Importing a backup now automatically pulls in any missing titles, descriptions, and preview images.
+- **Top bar shows where you are.** The title correctly updates to the collection you're viewing when you navigate back through sub-collections.
 
 ## Bugs fixed
 
-- **Collection screen no longer goes blank.** Switching tabs and coming back to a collection used to show it empty — the bookmarks now stay loaded.
-- **Instant duplicate detection.** Adding a link that already exists in the same collection is caught right away with a clear message, instead of only being checked later.
-- **Empty links blocked.** Trying to save an empty URL from inside a collection is now ignored cleanly.
-
-## Performance
-
-- **Faster collection queries.** Added database indexes on the collection↔bookmark links, so opening a collection and listing its bookmarks is noticeably snappier.
-- **No data loss.** All upgrades migrate your existing bookmarks, pins, and collection-only links safely to the new storage format.
+- **Collection ordering.** Collections and their bookmarks keep the order you chose — no more jumping around after reopening or navigating.
+- **In-collection search fields.** Search inside a collection was looking at the wrong fields and missing results — now fixed.
+- **Collection grid layout.** The collection grid renders cleanly with correct card sizing and spacing.
+- **Backup import restores collection links.** Importing a backup now correctly re-attaches bookmarks to their collections, including the new sub-collections.
+- **Nothing is lost on upgrade.** All existing bookmarks, collections, pins, and links migrate safely to this version.
 
 ## Files
 

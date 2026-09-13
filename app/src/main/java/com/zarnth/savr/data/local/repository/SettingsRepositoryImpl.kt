@@ -1,6 +1,7 @@
 package com.zarnth.savr.data.local.repository
 
 import android.content.Context
+import com.zarnth.savr.domain.model.SortOrder
 import com.zarnth.savr.domain.repository.SettingsRepository
 import com.zarnth.savr.presentation.setting.TapAction
 import com.zarnth.savr.presentation.setting.ViewMode
@@ -17,6 +18,7 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
         private const val KEY_VIEW_MODE = "view_mode"
         private const val KEY_AUTO_BACKUP = "auto_backup"
         private const val KEY_QUICK_SAVE = "quick_save"
+        private const val KEY_SORT_ORDER = "sort_order"
     }
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -70,5 +72,14 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
 
     override fun setQuickSaveEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_QUICK_SAVE, enabled) }
+    }
+
+    override fun getSortOrder(): SortOrder {
+        val ordinal = prefs.getInt(KEY_SORT_ORDER, SortOrder.DATE_NEWEST.ordinal)
+        return SortOrder.entries.getOrElse(ordinal) { SortOrder.DATE_NEWEST }
+    }
+
+    override fun setSortOrder(order: SortOrder) {
+        prefs.edit { putInt(KEY_SORT_ORDER, order.ordinal) }
     }
 }

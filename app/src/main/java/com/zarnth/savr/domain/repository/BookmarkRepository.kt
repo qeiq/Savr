@@ -16,6 +16,7 @@ interface BookmarkRepository {
     suspend fun getBookmarksMissingMetadata(): List<Bookmark>
     suspend fun hideBookmarks(ids: List<Long>)
     suspend fun searchBookmarks(text: String): Flow<Resource<List<Bookmark>>>
+    suspend fun searchBookmarksInCollection(collectionId: Long, text: String): List<Bookmark>
 
     suspend fun createCollection(name: String): Long
     suspend fun createCollection(name: String, parentCollectionId: Long?): Long

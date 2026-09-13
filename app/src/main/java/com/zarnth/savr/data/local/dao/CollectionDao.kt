@@ -122,4 +122,16 @@ interface CollectionDao {
 
     @Query("DELETE FROM collections WHERE parentCollectionId = :parentId")
     suspend fun deleteSubCollections(parentId: Long)
+
+    @Query("SELECT id FROM collections WHERE parentCollectionId = :parentId")
+    suspend fun getSubCollectionIds(parentId: Long): List<Long>
+
+    @Query("""
+        SELECT b.*, bcc.isPinned AS pinnedInCollection, bcc.pinnedAt AS pinnedAtInCollection FROM bookmarks b
+        INNER JOIN bookmark_collection_cross_ref bcc ON b.id = bcc.bookmarkId
+        WHERE bcc.collectionId = :collectionId AND b.isHidden = 0
+          AND (b.title LIKE '%' || :searchQuery || '%' OR b.url LIKE '%' || :searchQuery || '%' OR b.description LIKE '%' || :searchQuery || '%')
+        ORDER BY b.createdAt DESC
+    """)
+    suspend fun searchBookmarksInCollection(collectionId: Long, searchQuery: String): List<BookmarkWithCollectionPin>
 }

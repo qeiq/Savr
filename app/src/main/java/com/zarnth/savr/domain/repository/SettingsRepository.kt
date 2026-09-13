@@ -1,5 +1,6 @@
 package com.zarnth.savr.domain.repository
 
+import com.zarnth.savr.domain.model.SortOrder
 import com.zarnth.savr.presentation.setting.TapAction
 import com.zarnth.savr.presentation.setting.ViewMode
 import com.zarnth.savr.ui.theme.ThemeMode
@@ -17,4 +18,6 @@ interface SettingsRepository {
     fun setAutoBackupEnabled(enabled: Boolean)
     fun getQuickSaveEnabled(): Boolean
     fun setQuickSaveEnabled(enabled: Boolean)
+    fun getSortOrder(): SortOrder
+    fun setSortOrder(order: SortOrder)
 }
