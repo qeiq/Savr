@@ -5,9 +5,12 @@ import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -78,23 +81,9 @@ fun RootScreen(
     var currentTab by rememberSaveable { mutableIntStateOf(0) }
     var isSearching by remember { mutableStateOf(false) }
     var isCollectionSearching by remember { mutableStateOf(false) }
-    var collectionSearchQuery by remember { mutableStateOf("") }
     val pendingSharedUrl = remember { mutableStateOf(sharedUrl) }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
-
-    val collectionSearchResults = remember(
-        collectionState.collectionBookmarks,
-        collectionSearchQuery,
-        isCollectionSearching
-    ) {
-        if (!isCollectionSearching) null
-        else if (collectionSearchQuery.isBlank()) collectionState.collectionBookmarks
-        else collectionState.collectionBookmarks.filter { bm ->
-            (bm.title?.contains(collectionSearchQuery, ignoreCase = true) ?: false) ||
-            bm.url.contains(collectionSearchQuery, ignoreCase = true)
-        }
-    }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -138,6 +127,14 @@ fun RootScreen(
         if (isCollectionSearching) focusRequester.requestFocus()
     }
 
+    LaunchedEffect(collectionState.selectedCollection?.id) {
+        if (isCollectionSearching && searchState.collectionSearchQuery.isNotEmpty()) {
+            collectionState.selectedCollection?.id?.let { id ->
+                searchViewModel.onCollectionQueryChange(id, searchState.collectionSearchQuery)
+            }
+        }
+    }
+
     val showTopBarActions =
         !state.isSelectionMode && !collectionState.isSelectionMode &&
         !collectionState.isDetailSelectionMode && !isSearching && !isCollectionSearching
@@ -166,7 +163,7 @@ fun RootScreen(
                             onClose = { viewModel.homeEvents(HomeEvents.ClearSelection) },
                             onSelectAll = { viewModel.homeEvents(HomeEvents.SelectAll) },
                             onDeselectAll = { viewModel.homeEvents(HomeEvents.DeselectAll) },
-                            onDelete = { viewModel.homeEvents(HomeEvents.DeleteSelected) },
+                            onDelete = { viewModel.homeEvents(HomeEvents.ShowDeleteConfirmDialog) },
                             onAddToCollection = { viewModel.homeEvents(HomeEvents.ShowCollectionPicker) },
                             scrollBehavior = scrollBehavior
                         )
@@ -180,7 +177,7 @@ fun RootScreen(
                             onClose = { collectionViewModel.onEvent(CollectionEvents.ClearSelection) },
                             onSelectAll = { collectionViewModel.onEvent(CollectionEvents.SelectAll) },
                             onDeselectAll = { collectionViewModel.onEvent(CollectionEvents.DeselectAll) },
-                            onDelete = { collectionViewModel.onEvent(CollectionEvents.DeleteSelected) },
+                            onDelete = { collectionViewModel.onEvent(CollectionEvents.ShowDeleteSelectedConfirmDialog) },
                             scrollBehavior = scrollBehavior
                         )
                     }
@@ -194,8 +191,7 @@ fun RootScreen(
                             onSelectAll = { collectionViewModel.onEvent(CollectionEvents.SelectAllDetail) },
                             onDeselectAll = { collectionViewModel.onEvent(CollectionEvents.DeselectAllDetail) },
                             onDelete = {
-                                val id = collectionState.selectedCollection?.id ?: return@SelectionTopBar
-                                collectionViewModel.onEvent(CollectionEvents.RemoveSelectedFromCollection(id))
+                                collectionViewModel.onEvent(CollectionEvents.ShowRemoveFromCollectionConfirmDialog)
                             },
                             scrollBehavior = scrollBehavior
                         )
@@ -217,12 +213,19 @@ fun RootScreen(
 
                     isCollectionSearching -> {
                         SearchTopBar(
-                            query = collectionSearchQuery,
-                            onQueryChange = { collectionSearchQuery = it },
+                            query = searchState.collectionSearchQuery,
+                            onQueryChange = { query ->
+                                collectionState.selectedCollection?.id?.let { id ->
+                                    searchViewModel.onCollectionQueryChange(id, query)
+                                }
+                            },
                             placeholder = "Search in collection\u2026",
                             onClose = {
                                 isCollectionSearching = false
-                                collectionSearchQuery = ""
+                                searchViewModel.onCollectionQueryChange(
+                                    collectionState.selectedCollection?.id ?: 0L,
+                                    ""
+                                )
                                 focusManager.clearFocus()
                             },
                             focusRequester = focusRequester
@@ -247,7 +250,10 @@ fun RootScreen(
                                     viewModel.homeEvents(HomeEvents.ClearSelection)
                                 } else {
                                     isCollectionSearching = true
-                                    collectionSearchQuery = ""
+                                    searchViewModel.onCollectionQueryChange(
+                                        collectionState.selectedCollection?.id ?: 0L,
+                                        ""
+                                    )
                                     collectionViewModel.onEvent(CollectionEvents.ClearDetailSelection)
                                 }
                             },
@@ -304,8 +310,9 @@ fun RootScreen(
                         tapAction = settingState.tapAction,
                         viewMode = settingState.viewMode,
                         viewModel = collectionViewModel,
-                        searchResults = collectionSearchResults,
-                        searchQuery = collectionSearchQuery
+                        searchResults = if (isCollectionSearching) searchState.collectionSearchResults else null,
+                        searchQuery = searchState.collectionSearchQuery,
+                        searchLoading = searchState.isCollectionSearching
                     )
                 },
                 settingsScreen = { onOpenCrashLogs ->
@@ -325,7 +332,7 @@ fun RootScreen(
 
             BackHandler(enabled = isCollectionSearching) {
                 isCollectionSearching = false
-                collectionSearchQuery = ""
+                searchViewModel.onCollectionQueryChange(collectionState.selectedCollection?.id ?: 0L, "")
             }
         }
 
@@ -351,6 +358,98 @@ fun RootScreen(
                 current = state.sortOrder,
                 onSelect = { viewModel.homeEvents(HomeEvents.SetSortOrder(it)) },
                 onDismiss = { viewModel.homeEvents(HomeEvents.HideSortSheet) }
+            )
+        }
+
+        if (state.showDeleteConfirm) {
+            val count = state.selectedIds.size
+            AlertDialog(
+                onDismissRequest = { viewModel.homeEvents(HomeEvents.HideDeleteConfirmDialog) },
+                title = {
+                    Text(if (count == 1) "Delete bookmark?" else "Delete bookmarks?")
+                },
+                text = {
+                    Text(
+                        if (count == 1) "This bookmark will be deleted."
+                        else "These $count bookmarks will be deleted."
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.homeEvents(HomeEvents.ConfirmDeleteSelected) }) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.homeEvents(HomeEvents.HideDeleteConfirmDialog) }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+        if (collectionState.showDeleteSelectedConfirm) {
+            val count = collectionState.selectedIds.size
+            AlertDialog(
+                onDismissRequest = {
+                    collectionViewModel.onEvent(CollectionEvents.HideDeleteSelectedConfirmDialog)
+                },
+                title = {
+                    Text(if (count == 1) "Delete collection?" else "Delete collections?")
+                },
+                text = {
+                    Text(
+                        if (count == 1) "This collection and everything inside it will be deleted."
+                        else "These $count collections and everything inside them will be deleted."
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { collectionViewModel.onEvent(CollectionEvents.ConfirmDeleteSelected) }) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        collectionViewModel.onEvent(CollectionEvents.HideDeleteSelectedConfirmDialog)
+                    }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+        if (collectionState.showRemoveFromCollectionConfirm) {
+            val count = collectionState.detailSelectedIds.size
+            val collectionName = collectionState.selectedCollection?.name.orEmpty()
+            AlertDialog(
+                onDismissRequest = {
+                    collectionViewModel.onEvent(CollectionEvents.HideRemoveFromCollectionConfirmDialog)
+                },
+                title = {
+                    Text(
+                        if (count == 1) "Remove bookmark from collection?"
+                        else "Remove bookmarks from collection?"
+                    )
+                },
+                text = {
+                    Text(
+                        if (count == 1) "This bookmark will be removed from \"$collectionName\"."
+                        else "These $count bookmarks will be removed from \"$collectionName\"."
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        collectionViewModel.onEvent(CollectionEvents.ConfirmRemoveSelectedFromCollection)
+                    }) {
+                        Text("Remove")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        collectionViewModel.onEvent(CollectionEvents.HideRemoveFromCollectionConfirmDialog)
+                    }) {
+                        Text("Cancel")
+                    }
+                }
             )
         }
 

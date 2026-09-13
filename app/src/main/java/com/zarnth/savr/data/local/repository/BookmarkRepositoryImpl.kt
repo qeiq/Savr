@@ -74,6 +74,25 @@ class BookmarkRepositoryImpl(
             .catch { e -> emit(Resource.Error(e.message ?: "Unknown error")) }
     }
 
+    override suspend fun searchBookmarksInCollection(collectionId: Long, text: String): List<Bookmark> {
+        val queue = mutableListOf(collectionId)
+        val collectionIds = mutableListOf<Long>()
+        while (queue.isNotEmpty()) {
+            val parentId = queue.removeAt(queue.lastIndex)
+            collectionIds.add(parentId)
+            collectionDao.getSubCollectionIds(parentId).forEach(queue::add)
+        }
+        val results = mutableListOf<Bookmark>()
+        val seenBookmarkIds = mutableSetOf<Long>()
+        collectionIds.forEach { id ->
+            collectionDao.searchBookmarksInCollection(id, text).forEach { row ->
+                val bookmark = row.bookmark.toDomain()
+                if (seenBookmarkIds.add(bookmark.id)) results.add(bookmark)
+            }
+        }
+        return results
+    }
+
     override fun getBookmarks(): Flow<Resource<List<Bookmark>>> {
         return dao.getBookmarks()
             .map { list -> Resource.Success(list.map { it.toDomain() }) as Resource<List<Bookmark>> }

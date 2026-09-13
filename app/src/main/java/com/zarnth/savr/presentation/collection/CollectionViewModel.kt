@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.zarnth.savr.domain.model.Bookmark
 import com.zarnth.savr.domain.model.Collection
 import com.zarnth.savr.domain.repository.BookmarkRepository
+import com.zarnth.savr.domain.repository.SettingsRepository
 import com.zarnth.savr.domain.model.SortOrder
 import com.zarnth.savr.link_fetcher.LinkMetadataParser
 import com.zarnth.savr.utils.Resource
@@ -15,9 +16,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class CollectionViewModel(
-    private val repository: BookmarkRepository
+    private val repository: BookmarkRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
-    private val _state = MutableStateFlow(CollectionState())
+    private val _state = MutableStateFlow(
+        CollectionState(sortOrder = settingsRepository.getSortOrder())
+    )
     val state = _state.asStateFlow()
     private var collectionJob: Job? = null
     private var subCollectionsJob: Job? = null
@@ -136,6 +140,19 @@ class CollectionViewModel(
                 deleteSelected()
             }
 
+            CollectionEvents.ConfirmDeleteSelected -> {
+                _state.update { it.copy(showDeleteSelectedConfirm = false) }
+                deleteSelected()
+            }
+
+            CollectionEvents.ShowDeleteSelectedConfirmDialog -> {
+                _state.update { it.copy(showDeleteSelectedConfirm = true) }
+            }
+
+            CollectionEvents.HideDeleteSelectedConfirmDialog -> {
+                _state.update { it.copy(showDeleteSelectedConfirm = false) }
+            }
+
             is CollectionEvents.DeleteCollectionById -> {
                 deleteCollectionById(event.collectionId)
             }
@@ -224,7 +241,21 @@ class CollectionViewModel(
                 removeSelectedFromCollection(event.collectionId)
             }
 
+            CollectionEvents.ConfirmRemoveSelectedFromCollection -> {
+                _state.update { it.copy(showRemoveFromCollectionConfirm = false) }
+                _state.value.selectedCollection?.id?.let { removeSelectedFromCollection(it) }
+            }
+
+            CollectionEvents.ShowRemoveFromCollectionConfirmDialog -> {
+                _state.update { it.copy(showRemoveFromCollectionConfirm = true) }
+            }
+
+            CollectionEvents.HideRemoveFromCollectionConfirmDialog -> {
+                _state.update { it.copy(showRemoveFromCollectionConfirm = false) }
+            }
+
             is CollectionEvents.SetSortOrder -> {
+                settingsRepository.setSortOrder(event.sortOrder)
                 val sorted = sortBookmarks(rawCollectionBookmarks, event.sortOrder)
                 _state.update { current ->
                     val activeId = current.selectedCollection?.id

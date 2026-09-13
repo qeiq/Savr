@@ -57,7 +57,8 @@ fun CollectionDetailScreen(
     viewMode: ViewMode = ViewMode.GRID,
     viewModel: CollectionViewModel,
     searchResults: List<Bookmark>? = null,
-    searchQuery: String = ""
+    searchQuery: String = "",
+    searchLoading: Boolean = false
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -111,7 +112,7 @@ fun CollectionDetailScreen(
                 viewMode = viewMode,
                 selectedIds = state.detailSelectedIds,
                 isSelectionMode = state.isDetailSelectionMode,
-                isLoading = detailData.isLoading,
+                isLoading = searchLoading || detailData.isLoading,
                 onBodyClick = { item ->
                     when (tapAction) {
                         TapAction.OPEN_BROWSER -> item.url?.let { openChromeTab(it, context) }

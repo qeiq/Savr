@@ -24,6 +24,8 @@ data class CollectionState(
     val isDetailLoading: Boolean = false,
     val selectedIds: Set<Long> = emptySet(),
     val isSelectionMode: Boolean = false,
+    val showDeleteSelectedConfirm: Boolean = false,
+    val showRemoveFromCollectionConfirm: Boolean = false,
     val detailSelectedIds: Set<Long> = emptySet(),
     val isDetailSelectionMode: Boolean = false,
     val tempBookmark: Bookmark? = null,

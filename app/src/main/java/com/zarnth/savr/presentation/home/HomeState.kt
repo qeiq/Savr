@@ -26,6 +26,7 @@ data class HomeState(
     val editDescription: String = "",
     val selectedIds: Set<Long> = emptySet(),
     val isSelectionMode: Boolean = false,
+    val showDeleteConfirm: Boolean = false,
     val showCollectionPicker: Boolean = false,
     val collections: List<com.zarnth.savr.domain.model.Collection> = emptyList(),
     val sortOrder: SortOrder = SortOrder.DATE_NEWEST,
